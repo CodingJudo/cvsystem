@@ -1,0 +1,5 @@
+- Authentication or multi-user support
+- Database persistence
+- Full Cinode schema coverage
+- PDF export
+- WYSIWYG editing
