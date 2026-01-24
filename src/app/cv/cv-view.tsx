@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import type { DomainCV, Locale, BilingualText, Role } from '@/domain/model/cv';
 import { CVProvider, useCVState, useCVActions } from '@/lib/store/cv-store';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -113,6 +114,13 @@ function CVContent({ warnings, initialCv }: { warnings: string[]; initialCv: Dom
               )}
             </TabsList>
           </Tabs>
+
+          {/* Preview & Print */}
+          <Button asChild>
+            <Link href="/cv/preview">
+              {locale === 'sv' ? 'Förhandsgranska & Skriv ut' : 'Preview & Print'}
+            </Link>
+          </Button>
         </div>
       </div>
 
