@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import type { DomainCV, Locale } from '@/domain/model/cv';
 import { PrintLayout } from '../print-layout';
 import { Button } from '@/components/ui/button';
@@ -192,6 +193,9 @@ ${printContainer.innerHTML}
 
             <Button variant="outline" onClick={handleDownloadHtml}>
               Download HTML
+            </Button>
+            <Button variant="outline" asChild>
+              <Link href="/cv/canvas">Export as Image</Link>
             </Button>
             <Button onClick={handlePrint}>
               Print / Save as PDF

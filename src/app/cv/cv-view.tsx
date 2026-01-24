@@ -115,10 +115,15 @@ function CVContent({ warnings, initialCv }: { warnings: string[]; initialCv: Dom
             </TabsList>
           </Tabs>
 
-          {/* Preview & Print */}
+          {/* Export Actions */}
+          <Button variant="outline" asChild>
+            <Link href="/cv/canvas">
+              {locale === 'sv' ? 'Exportera bild' : 'Export Image'}
+            </Link>
+          </Button>
           <Button asChild>
             <Link href="/cv/preview">
-              {locale === 'sv' ? 'Förhandsgranska & Skriv ut' : 'Preview & Print'}
+              {locale === 'sv' ? 'Skriv ut' : 'Print'}
             </Link>
           </Button>
         </div>
