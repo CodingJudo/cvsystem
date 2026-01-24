@@ -136,55 +136,100 @@ function extractTitle(raw: unknown): string | null {
 }
 
 /**
- * Extract skills from SkillsByCategory block
+ * Extract skills from multiple blocks: SkillsByCategory, Skills, TopSkills
  */
 function extractSkills(raw: unknown, warnings: string[]): Skill[] {
   const blocks = getArray(raw, 'resume.blocks');
   if (!blocks) return [];
 
-  const skillsBlock = findBlock(blocks, 'SkillsByCategory');
-  if (!skillsBlock) {
-    warnings.push('Missing SkillsByCategory block');
-    return [];
-  }
-
-  const data = getArray(skillsBlock, 'data');
-  if (!data) {
-    warnings.push('Missing data array in SkillsByCategory block');
-    return [];
-  }
-
   const skills: Skill[] = [];
   const seenIds = new Set<string>();
+  const seenNames = new Set<string>();
 
-  for (const category of data) {
-    if (!isObject(category)) continue;
+  // Helper to add a skill with deduplication
+  const addSkill = (skill: unknown) => {
+    if (!isObject(skill)) return;
 
-    const categorySkills = getArray(category, 'skills');
-    if (!categorySkills) continue;
+    const id = getString(skill, 'id') ?? getString(skill, 'blockItemId');
+    const name = getString(skill, 'name');
 
-    for (const skill of categorySkills) {
-      if (!isObject(skill)) continue;
+    if (!name) return;
+    
+    // Deduplicate by ID or name
+    const normalizedName = name.toLowerCase();
+    if (id && seenIds.has(id)) return;
+    if (seenNames.has(normalizedName)) return;
 
-      const id = getString(skill, 'id') ?? getString(skill, 'blockItemId');
-      const name = getString(skill, 'name');
+    if (id) seenIds.add(id);
+    seenNames.add(normalizedName);
 
-      if (!id || !name) continue;
-      if (seenIds.has(id)) continue; // Deduplicate
+    const level = getNumber(skill, 'level');
+    const daysExperience = getNumber(skill, 'numberOfDaysWorkExperience');
+    const years = daysExperience ? Math.round(daysExperience / 365) : null;
 
-      seenIds.add(id);
+    skills.push({
+      id: id ?? `skill-${skills.length}`,
+      name,
+      level,
+      years,
+    });
+  };
 
-      const level = getNumber(skill, 'level');
-      const daysExperience = getNumber(skill, 'numberOfDaysWorkExperience');
-      const years = daysExperience ? Math.round(daysExperience / 365) : null;
-
-      skills.push({
-        id,
-        name,
-        level,
-        years,
-      });
+  // 1. Extract from SkillsByCategory (grouped skills)
+  const skillsByCategoryBlock = findBlock(blocks, 'SkillsByCategory');
+  if (skillsByCategoryBlock) {
+    const data = getArray(skillsByCategoryBlock, 'data');
+    if (data) {
+      for (const category of data) {
+        if (!isObject(category)) continue;
+        const categorySkills = getArray(category, 'skills');
+        if (categorySkills) {
+          for (const skill of categorySkills) {
+            addSkill(skill);
+          }
+        }
+      }
     }
+  }
+
+  // 2. Extract from TopSkills (highlighted skills)
+  const topSkillsBlock = findBlock(blocks, 'TopSkills');
+  if (topSkillsBlock) {
+    const data = getArray(topSkillsBlock, 'data');
+    if (data) {
+      for (const item of data) {
+        if (!isObject(item)) continue;
+        // TopSkills might have skill nested or directly
+        const nestedSkill = item.skill;
+        if (isObject(nestedSkill)) {
+          addSkill(nestedSkill);
+        } else {
+          addSkill(item);
+        }
+      }
+    }
+  }
+
+  // 3. Extract from Skills (full skill list)
+  const skillsBlock = findBlock(blocks, 'Skills');
+  if (skillsBlock) {
+    const data = getArray(skillsBlock, 'data');
+    if (data) {
+      for (const item of data) {
+        if (!isObject(item)) continue;
+        // Skills block might have skill nested or directly
+        const nestedSkill = item.skill;
+        if (isObject(nestedSkill)) {
+          addSkill(nestedSkill);
+        } else {
+          addSkill(item);
+        }
+      }
+    }
+  }
+
+  if (skills.length === 0) {
+    warnings.push('No skills found in any skills block');
   }
 
   return skills;
@@ -202,27 +247,19 @@ function extractRoles(
   const blocksSv = getArray(rawSv, 'resume.blocks');
   const blocksEn = getArray(rawEn, 'resume.blocks');
 
-  // Try HighlightedWorkExperiences first, as it contains the detailed experiences
+  // Work experience block names in order of preference
+  const workBlockNames = ['WorkExperiences', 'HighlightedWorkExperiences'];
+
   let dataSv: unknown[] | null = null;
   let dataEn: unknown[] | null = null;
 
+  // Extract from Swedish blocks
   if (blocksSv) {
-    // Look for block containing work experience data
-    // The block with friendlyBlockName containing work experiences has a specific structure
-    for (const block of blocksSv) {
-      if (!isObject(block)) continue;
-      const blockName = getString(block, 'friendlyBlockName');
-
-      // Check for HighlightedWorkExperiences or similar
-      if (blockName === 'HighlightedWorkExperiences' || blockName === 'WorkExperiences') {
-        continue; // These might be empty, we need the block with data array containing employer
-      }
-
-      // Look for blocks with data array containing work entries (title, employer, description)
-      const data = getArray(block, 'data');
-      if (data && data.length > 0) {
-        const firstItem = data[0];
-        if (isObject(firstItem) && ('employer' in firstItem || 'startDate' in firstItem)) {
+    for (const preferredName of workBlockNames) {
+      const block = findBlock(blocksSv, preferredName);
+      if (block) {
+        const data = getArray(block, 'data');
+        if (data && data.length > 0) {
           dataSv = data;
           break;
         }
@@ -230,14 +267,13 @@ function extractRoles(
     }
   }
 
+  // Extract from English blocks
   if (blocksEn) {
-    for (const block of blocksEn) {
-      if (!isObject(block)) continue;
-
-      const data = getArray(block, 'data');
-      if (data && data.length > 0) {
-        const firstItem = data[0];
-        if (isObject(firstItem) && ('employer' in firstItem || 'startDate' in firstItem)) {
+    for (const preferredName of workBlockNames) {
+      const block = findBlock(blocksEn, preferredName);
+      if (block) {
+        const data = getArray(block, 'data');
+        if (data && data.length > 0) {
           dataEn = data;
           break;
         }

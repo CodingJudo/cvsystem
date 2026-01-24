@@ -39,7 +39,7 @@ const createSampleSv = (overrides: Record<string, unknown> = {}) => ({
         ],
       },
       {
-        friendlyBlockName: 'Projects',
+        friendlyBlockName: 'WorkExperiences',
         data: [
           {
             id: 'role-1',
@@ -94,7 +94,7 @@ const createSampleEn = (overrides: Record<string, unknown> = {}) => ({
         ],
       },
       {
-        friendlyBlockName: 'Projects',
+        friendlyBlockName: 'WorkExperiences',
         data: [
           {
             id: 'role-1',
@@ -226,7 +226,7 @@ describe('extractCv', () => {
       expect(result.warnings.some((w) => w.includes('Presentation'))).toBe(true);
     });
 
-    it('handles missing SkillsByCategory block with warning', () => {
+    it('handles missing skills blocks with warning', () => {
       const svWithoutSkills = {
         ...createSampleSv(),
         resume: {
@@ -242,7 +242,8 @@ describe('extractCv', () => {
 
       const result = extractCv(svWithoutSkills, createSampleEn());
 
-      expect(result.warnings.some((w) => w.includes('SkillsByCategory'))).toBe(true);
+      // Should have a warning about no skills found
+      expect(result.warnings.some((w) => w.toLowerCase().includes('skill'))).toBe(true);
     });
 
     it('handles missing resume.blocks with warning', () => {
@@ -377,7 +378,7 @@ describe('extractCv', () => {
         resume: {
           blocks: [
             {
-              friendlyBlockName: 'Projects',
+              friendlyBlockName: 'WorkExperiences',
               data: [
                 {
                   id: 'current-role',
