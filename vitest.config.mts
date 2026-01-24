@@ -13,14 +13,10 @@ export default defineConfig({
     },
   },
   test: {
-    // Use node for pure logic tests, jsdom for React component tests
+    // Use node for pure logic tests (no DOM needed)
     environment: 'node',
     globals: true,
-    include: ['src/**/*.test.{ts,tsx}'],
-    // Use jsdom only for React component tests
-    environmentMatchGlobs: [
-      ['src/**/*.test.tsx', 'jsdom'],
-    ],
+    include: ['src/**/*.test.ts'],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
