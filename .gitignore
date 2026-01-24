@@ -39,3 +39,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Personal data - NEVER commit to public repo
+fixtures/cinode/*
+*.pdf
+/output/
+/exports/
