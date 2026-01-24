@@ -35,15 +35,15 @@ interface RoleSkillBadgeProps {
 
 function RoleSkillBadge({ skill, onRemove, editable = true }: RoleSkillBadgeProps) {
   return (
-    <span className="inline-flex items-center gap-1 rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+    <span className="inline-flex items-center gap-1 rounded-full bg-[var(--geisli-primary)]/10 border border-[var(--geisli-primary)]/20 px-2.5 py-0.5 text-xs font-medium text-[var(--geisli-secondary)]">
       {skill.name}
       {skill.level && (
-        <span className="text-blue-600 dark:text-blue-400">({skill.level})</span>
+        <span className="text-[var(--geisli-primary)]">({skill.level})</span>
       )}
       {editable && (
         <button
           onClick={onRemove}
-          className="ml-1 text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-200"
+          className="ml-1 text-[var(--geisli-primary)] hover:text-red-600"
           title="Remove skill"
         >
           ×
@@ -168,6 +168,7 @@ interface RoleEditorCardProps {
 
 function RoleEditorCard({ role, locale, isEditing, onToggleEdit }: RoleEditorCardProps) {
   const { updateRole, toggleVisibility, removeRoleSkill } = useRoles();
+  const [isExpanded, setIsExpanded] = useState(false);
 
   const dateRange = [
     formatDate(role.start),
@@ -175,6 +176,7 @@ function RoleEditorCard({ role, locale, isEditing, onToggleEdit }: RoleEditorCar
   ].filter(Boolean).join(' – ');
 
   const description = getBilingualText(role.description, locale);
+  const needsExpansion = description.length > 300;
 
   const handleDescriptionChange = (value: string) => {
     updateRole(role.id, {
@@ -186,14 +188,14 @@ function RoleEditorCard({ role, locale, isEditing, onToggleEdit }: RoleEditorCar
   };
 
   return (
-    <Card className={`transition-opacity ${!role.visible ? 'opacity-50' : ''}`}>
+    <Card className={`transition-opacity border-none shadow-lg bg-white ${!role.visible ? 'opacity-50' : ''}`}>
       <CardHeader className="pb-2">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-2">
             {/* Visibility toggle */}
             <button
               onClick={() => toggleVisibility(role.id)}
-              className={`text-lg ${role.visible ? 'text-green-600' : 'text-zinc-400'}`}
+              className={`text-lg transition-colors ${role.visible ? 'text-[var(--geisli-primary)]' : 'text-gray-400'}`}
               title={role.visible 
                 ? (locale === 'sv' ? 'Synlig i export' : 'Visible in export')
                 : (locale === 'sv' ? 'Dold i export' : 'Hidden in export')
@@ -203,13 +205,13 @@ function RoleEditorCard({ role, locale, isEditing, onToggleEdit }: RoleEditorCar
             </button>
             
             <div>
-              <h4 className="font-semibold">
+              <h4 className="font-semibold text-[var(--geisli-secondary)]">
                 {role.title || (locale === 'sv' ? 'Utan titel' : 'Untitled Role')}
               </h4>
               {role.company && (
-                <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                <p className="text-sm text-gray-600">
                   {role.company}
-                  {role.location && ` • ${role.location}`}
+                  {role.location && <span className="text-gray-400"> • {role.location}</span>}
                 </p>
               )}
             </div>
@@ -217,9 +219,14 @@ function RoleEditorCard({ role, locale, isEditing, onToggleEdit }: RoleEditorCar
           
           <div className="flex items-center gap-2">
             {dateRange && (
-              <span className="text-sm text-zinc-500">{dateRange}</span>
+              <span className="text-sm text-[var(--geisli-primary)]">{dateRange}</span>
             )}
-            <Button variant="ghost" size="sm" onClick={onToggleEdit}>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={onToggleEdit}
+              className="text-[var(--geisli-primary)] hover:bg-[var(--geisli-primary)]/10"
+            >
               {isEditing 
                 ? (locale === 'sv' ? 'Klar' : 'Done')
                 : (locale === 'sv' ? 'Redigera' : 'Edit')
@@ -229,10 +236,40 @@ function RoleEditorCard({ role, locale, isEditing, onToggleEdit }: RoleEditorCar
         </div>
       </CardHeader>
       
-      <CardContent>
-        {/* Technologies */}
-        <div className="mb-3">
-          <div className="mb-1 text-xs font-medium text-zinc-500 dark:text-zinc-400">
+      <CardContent className="space-y-3">
+        {/* Description - MOVED BEFORE TECHNOLOGIES */}
+        {isEditing ? (
+          <Textarea
+            value={description}
+            onChange={(e) => handleDescriptionChange(e.target.value)}
+            placeholder={locale === 'sv' ? 'Beskrivning...' : 'Description...'}
+            rows={6}
+            className="text-sm"
+          />
+        ) : (
+          description && (
+            <div>
+              <p className={`text-sm text-gray-700 whitespace-pre-line ${!isExpanded && needsExpansion ? 'line-clamp-4' : ''}`}>
+                {description}
+              </p>
+              {needsExpansion && (
+                <button
+                  onClick={() => setIsExpanded(!isExpanded)}
+                  className="mt-1 text-sm text-[var(--geisli-primary)] hover:underline"
+                >
+                  {isExpanded 
+                    ? (locale === 'sv' ? '▲ Visa mindre' : '▲ Show less')
+                    : (locale === 'sv' ? '▼ Visa mer' : '▼ Show more')
+                  }
+                </button>
+              )}
+            </div>
+          )
+        )}
+
+        {/* Technologies - MOVED AFTER DESCRIPTION */}
+        <div className="pt-2 border-t border-gray-100">
+          <div className="mb-2 text-xs font-medium text-gray-500 uppercase tracking-wide">
             {locale === 'sv' ? 'Tekniker' : 'Technologies'}
           </div>
           <div className="flex flex-wrap gap-1">
@@ -246,7 +283,7 @@ function RoleEditorCard({ role, locale, isEditing, onToggleEdit }: RoleEditorCar
                 />
               ))
             ) : (
-              <span className="text-xs text-zinc-400">
+              <span className="text-xs text-gray-400 italic">
                 {locale === 'sv' ? 'Inga tekniker tillagda' : 'No technologies added'}
               </span>
             )}
@@ -262,23 +299,6 @@ function RoleEditorCard({ role, locale, isEditing, onToggleEdit }: RoleEditorCar
             </div>
           )}
         </div>
-
-        {/* Description */}
-        {isEditing ? (
-          <Textarea
-            value={description}
-            onChange={(e) => handleDescriptionChange(e.target.value)}
-            placeholder={locale === 'sv' ? 'Beskrivning...' : 'Description...'}
-            rows={4}
-            className="text-sm"
-          />
-        ) : (
-          description && (
-            <p className="text-sm text-zinc-700 dark:text-zinc-300 line-clamp-3">
-              {description}
-            </p>
-          )
-        )}
       </CardContent>
     </Card>
   );
@@ -299,17 +319,21 @@ export function RolesEditor({ locale }: RolesEditorProps) {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold">
+        <h3 className="text-lg font-semibold text-[var(--geisli-secondary)]">
           {locale === 'sv' ? 'Arbetslivserfarenhet' : 'Work Experience'}
         </h3>
-        <span className="text-sm text-zinc-500">
+        <span className="text-sm text-gray-500">
           {visibleCount} {locale === 'sv' ? 'synliga' : 'visible'}
-          {hiddenCount > 0 && `, ${hiddenCount} ${locale === 'sv' ? 'dolda' : 'hidden'}`}
+          {hiddenCount > 0 && (
+            <span className="text-[var(--geisli-accent)]">
+              {`, ${hiddenCount} ${locale === 'sv' ? 'dolda' : 'hidden'}`}
+            </span>
+          )}
         </span>
       </div>
 
       {roles.length === 0 ? (
-        <p className="text-zinc-500">
+        <p className="text-gray-400 italic">
           {locale === 'sv' ? 'Ingen arbetslivserfarenhet hittad.' : 'No work experience found.'}
         </p>
       ) : (

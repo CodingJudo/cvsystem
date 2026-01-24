@@ -22,8 +22,32 @@ export interface Skill {
   id: string;
   name: string;
   level?: number | null;
-  /** Number of years of experience (derived from numberOfDaysWorkExperience) */
+  /** Number of years of experience from Cinode (original import) */
   years?: number | null;
+  /** Calculated years from role durations where this skill is used */
+  calculatedYears?: number | null;
+  /** User-overridden years (when set, takes precedence over calculated) */
+  overriddenYears?: number | null;
+}
+
+/**
+ * Get the effective years for a skill (override > calculated > years)
+ */
+export function getEffectiveYears(skill: Skill): number | null {
+  if (skill.overriddenYears !== undefined && skill.overriddenYears !== null) {
+    return skill.overriddenYears;
+  }
+  if (skill.calculatedYears !== undefined && skill.calculatedYears !== null) {
+    return skill.calculatedYears;
+  }
+  return skill.years ?? null;
+}
+
+/**
+ * Check if a skill has a manual override
+ */
+export function hasOverride(skill: Skill): boolean {
+  return skill.overriddenYears !== undefined && skill.overriddenYears !== null;
 }
 
 /**

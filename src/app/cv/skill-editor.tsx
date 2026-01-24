@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import type { Skill } from '@/domain/model/cv';
+import { getEffectiveYears, hasOverride } from '@/domain/model/cv';
 import { useSkills } from '@/lib/store/cv-store';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -28,14 +29,36 @@ function SkillBadgeEditable({ skill, onEdit, onDelete }: SkillBadgeEditableProps
     ? '●'.repeat(skill.level) + '○'.repeat(5 - skill.level)
     : null;
 
+  const effectiveYears = getEffectiveYears(skill);
+  const isOverridden = hasOverride(skill);
+
   const handleSave = () => {
-    onEdit(editedSkill);
+    // If the user changed the years, set it as an override
+    const originalEffective = getEffectiveYears(skill);
+    const newYears = editedSkill.years;
+    
+    if (newYears !== originalEffective && newYears !== null) {
+      // User explicitly set a different value - mark as override
+      onEdit({
+        ...editedSkill,
+        overriddenYears: newYears,
+      });
+    } else {
+      onEdit(editedSkill);
+    }
     setIsEditing(false);
   };
 
   const handleCancel = () => {
     setEditedSkill(skill);
     setIsEditing(false);
+  };
+
+  const handleClearOverride = () => {
+    onEdit({
+      ...skill,
+      overriddenYears: null,
+    });
   };
 
   if (isEditing) {
@@ -105,21 +128,42 @@ function SkillBadgeEditable({ skill, onEdit, onDelete }: SkillBadgeEditableProps
     );
   }
 
+  // Use different colors for overridden skills
+  const badgeClasses = isOverridden
+    ? "group inline-flex items-center gap-2 rounded-full bg-[var(--geisli-accent)]/10 px-3 py-1 text-sm transition-colors hover:bg-[var(--geisli-accent)]/20 border border-[var(--geisli-accent)]/30"
+    : "group inline-flex items-center gap-2 rounded-full bg-[var(--geisli-primary)]/10 px-3 py-1 text-sm transition-colors hover:bg-[var(--geisli-primary)]/20 border border-[var(--geisli-primary)]/20";
+
   return (
-    <div className="group inline-flex items-center gap-2 rounded-full bg-zinc-100 px-3 py-1 text-sm transition-colors hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700">
-      <span className="font-medium">{skill.name}</span>
+    <div className={badgeClasses}>
+      <span className="font-medium text-[var(--geisli-secondary)]">
+        {skill.name}
+        {isOverridden && <span className="ml-0.5 text-[var(--geisli-accent)]">*</span>}
+      </span>
       {levelIndicator && (
-        <span className="text-xs text-zinc-500" title={`Level ${skill.level}/5`}>
+        <span className={`text-xs ${isOverridden ? 'text-[var(--geisli-accent)]' : 'text-[var(--geisli-primary)]'}`} title={`Level ${skill.level}/5`}>
           {levelIndicator}
         </span>
       )}
-      {skill.years && skill.years > 0 && (
-        <span className="text-xs text-zinc-500">{skill.years}y</span>
+      {effectiveYears !== null && effectiveYears > 0 && (
+        <span className={`text-xs ${isOverridden ? 'text-[var(--geisli-accent)]' : 'text-gray-500'}`}>
+          {effectiveYears}y
+        </span>
       )}
       <div className="ml-1 flex gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+        {isOverridden && (
+          <button
+            onClick={handleClearOverride}
+            className="rounded p-0.5 text-[var(--geisli-accent)] hover:bg-[var(--geisli-accent)]/20"
+            title="Clear manual override"
+          >
+            <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+          </button>
+        )}
         <button
           onClick={() => setIsEditing(true)}
-          className="rounded p-0.5 text-zinc-500 hover:bg-zinc-300 hover:text-zinc-700 dark:hover:bg-zinc-600 dark:hover:text-zinc-200"
+          className="rounded p-0.5 text-gray-500 hover:bg-[var(--geisli-primary)]/20 hover:text-[var(--geisli-primary)]"
           title="Edit skill"
         >
           <svg
@@ -138,7 +182,7 @@ function SkillBadgeEditable({ skill, onEdit, onDelete }: SkillBadgeEditableProps
         </button>
         <button
           onClick={() => onDelete(skill.id)}
-          className="rounded p-0.5 text-zinc-500 hover:bg-red-100 hover:text-red-600 dark:hover:bg-red-900 dark:hover:text-red-400"
+          className="rounded p-0.5 text-gray-500 hover:bg-red-100 hover:text-red-600"
           title="Delete skill"
         >
           <svg
@@ -258,24 +302,33 @@ export function SkillsEditor({ locale }: SkillsEditorProps) {
       )
     : skills;
 
+  // Count overridden skills
+  const overriddenCount = skills.filter(s => hasOverride(s)).length;
+
   const handleAddSkill = (skill: Omit<Skill, 'id'>) => {
     addSkill(skill);
     setIsAdding(false);
   };
 
   return (
-    <Card>
+    <Card className="border-none shadow-lg bg-white">
       <CardHeader>
         <div className="flex items-start justify-between">
           <div>
-            <CardTitle>{locale === 'sv' ? 'Kompetenser' : 'Skills'}</CardTitle>
+            <CardTitle className="text-[var(--geisli-secondary)]">
+              {locale === 'sv' ? 'Kompetenser' : 'Skills'}
+            </CardTitle>
             <CardDescription>
               {skills.length} {locale === 'sv' ? 'kompetenser' : 'skills'}
-              {searchQuery && ` (${filteredSkills.length} shown)`}
+              {searchQuery && ` (${filteredSkills.length} ${locale === 'sv' ? 'visas' : 'shown'})`}
             </CardDescription>
           </div>
           {!isAdding && (
-            <Button size="sm" onClick={() => setIsAdding(true)}>
+            <Button 
+              size="sm" 
+              onClick={() => setIsAdding(true)}
+              className="bg-[var(--geisli-primary)] hover:bg-[var(--geisli-primary)]/90"
+            >
               + {locale === 'sv' ? 'Lägg till' : 'Add Skill'}
             </Button>
           )}
@@ -292,7 +345,7 @@ export function SkillsEditor({ locale }: SkillsEditorProps) {
 
         {/* Add form */}
         {isAdding && (
-          <div className="rounded-lg border bg-zinc-50 p-4 dark:bg-zinc-900">
+          <div className="rounded-lg border border-[var(--geisli-primary)]/20 bg-[var(--geisli-primary)]/5 p-4">
             <AddSkillForm onAdd={handleAddSkill} onCancel={() => setIsAdding(false)} />
           </div>
         )}
@@ -310,7 +363,7 @@ export function SkillsEditor({ locale }: SkillsEditorProps) {
             ))}
           </div>
         ) : (
-          <p className="text-zinc-500 italic">
+          <p className="text-gray-400 italic">
             {searchQuery
               ? locale === 'sv'
                 ? 'Inga matchande kompetenser'
@@ -319,6 +372,24 @@ export function SkillsEditor({ locale }: SkillsEditorProps) {
               ? 'Inga kompetenser'
               : 'No skills'}
           </p>
+        )}
+
+        {/* Legend */}
+        {overriddenCount > 0 && (
+          <div className="pt-3 border-t border-gray-100">
+            <div className="flex items-center gap-4 text-xs text-gray-500">
+              <div className="flex items-center gap-1.5">
+                <span className="inline-block w-3 h-3 rounded-full bg-[var(--geisli-primary)]/20 border border-[var(--geisli-primary)]/30"></span>
+                <span>{locale === 'sv' ? 'Automatisk erfarenhet' : 'Auto-calculated experience'}</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="inline-block w-3 h-3 rounded-full bg-[var(--geisli-accent)]/20 border border-[var(--geisli-accent)]/30"></span>
+                <span>
+                  <span className="text-[var(--geisli-accent)]">*</span> = {locale === 'sv' ? 'manuellt justerad' : 'manually adjusted'} ({overriddenCount})
+                </span>
+              </div>
+            </div>
+          </div>
         )}
       </CardContent>
     </Card>
