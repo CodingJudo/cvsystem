@@ -8,7 +8,7 @@ import {
   type ReactNode,
   type Dispatch,
 } from 'react';
-import type { DomainCV, Skill } from '@/domain/model/cv';
+import type { DomainCV, Skill, Role, RoleSkill } from '@/domain/model/cv';
 
 // Storage key for localStorage
 const STORAGE_KEY = 'cv-edits';
@@ -21,7 +21,12 @@ type CVAction =
   | { type: 'DELETE_SKILL'; skillId: string }
   | { type: 'REORDER_SKILLS'; skills: Skill[] }
   | { type: 'RESET_TO_ORIGINAL' }
-  | { type: 'LOAD_FROM_STORAGE'; cv: DomainCV };
+  | { type: 'LOAD_FROM_STORAGE'; cv: DomainCV }
+  // Role actions
+  | { type: 'UPDATE_ROLE'; roleId: string; updates: Partial<Omit<Role, 'id' | 'skills'>> }
+  | { type: 'TOGGLE_ROLE_VISIBILITY'; roleId: string }
+  | { type: 'ADD_ROLE_SKILL'; roleId: string; skill: RoleSkill; syncToMain?: boolean }
+  | { type: 'REMOVE_ROLE_SKILL'; roleId: string; skillId: string };
 
 interface CVState {
   /** The current (possibly edited) CV */
@@ -106,6 +111,80 @@ function cvReducer(state: CVState, action: CVAction): CVState {
         ...state,
         cv: state.originalCv,
         hasChanges: false,
+      };
+    }
+
+    case 'UPDATE_ROLE': {
+      if (!state.cv) return state;
+      const updatedRoles = state.cv.roles.map((r) =>
+        r.id === action.roleId ? { ...r, ...action.updates } : r
+      );
+      return {
+        ...state,
+        cv: { ...state.cv, roles: updatedRoles },
+        hasChanges: true,
+      };
+    }
+
+    case 'TOGGLE_ROLE_VISIBILITY': {
+      if (!state.cv) return state;
+      const toggledRoles = state.cv.roles.map((r) =>
+        r.id === action.roleId ? { ...r, visible: !r.visible } : r
+      );
+      return {
+        ...state,
+        cv: { ...state.cv, roles: toggledRoles },
+        hasChanges: true,
+      };
+    }
+
+    case 'ADD_ROLE_SKILL': {
+      if (!state.cv) return state;
+      
+      // Add skill to the role
+      const rolesWithSkill = state.cv.roles.map((r) => {
+        if (r.id !== action.roleId) return r;
+        // Check if skill already exists in role
+        if (r.skills.some((s) => s.id === action.skill.id || s.name.toLowerCase() === action.skill.name.toLowerCase())) {
+          return r;
+        }
+        return { ...r, skills: [...r.skills, action.skill] };
+      });
+
+      // Optionally sync to main skills
+      let updatedSkills = state.cv.skills;
+      if (action.syncToMain) {
+        const skillExists = state.cv.skills.some(
+          (s) => s.name.toLowerCase() === action.skill.name.toLowerCase()
+        );
+        if (!skillExists) {
+          const mainSkill: Skill = {
+            id: `skill-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            name: action.skill.name,
+            level: action.skill.level,
+            years: 0,
+          };
+          updatedSkills = [...state.cv.skills, mainSkill];
+        }
+      }
+
+      return {
+        ...state,
+        cv: { ...state.cv, roles: rolesWithSkill, skills: updatedSkills },
+        hasChanges: true,
+      };
+    }
+
+    case 'REMOVE_ROLE_SKILL': {
+      if (!state.cv) return state;
+      const rolesWithoutSkill = state.cv.roles.map((r) => {
+        if (r.id !== action.roleId) return r;
+        return { ...r, skills: r.skills.filter((s) => s.id !== action.skillId) };
+      });
+      return {
+        ...state,
+        cv: { ...state.cv, roles: rolesWithoutSkill },
+        hasChanges: true,
       };
     }
 
@@ -210,6 +289,51 @@ export function useSkills() {
     
     reorderSkills: (skills: Skill[]) => {
       dispatch({ type: 'REORDER_SKILLS', skills });
+    },
+  };
+}
+
+// Convenience hook for role operations
+export function useRoles() {
+  const state = useCVState();
+  const dispatch = useCVDispatch();
+
+  return {
+    roles: state.cv?.roles ?? [],
+    
+    /** Get only visible roles (for exports) */
+    visibleRoles: (state.cv?.roles ?? []).filter((r) => r.visible),
+    
+    updateRole: (roleId: string, updates: Partial<Omit<Role, 'id' | 'skills'>>) => {
+      dispatch({ type: 'UPDATE_ROLE', roleId, updates });
+    },
+    
+    toggleVisibility: (roleId: string) => {
+      dispatch({ type: 'TOGGLE_ROLE_VISIBILITY', roleId });
+    },
+    
+    addRoleSkill: (roleId: string, skill: Omit<RoleSkill, 'id'>, syncToMain = true) => {
+      const newSkill: RoleSkill = {
+        ...skill,
+        id: `role-skill-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      };
+      dispatch({ type: 'ADD_ROLE_SKILL', roleId, skill: newSkill, syncToMain });
+      return newSkill;
+    },
+    
+    /** Add an existing skill (from main skills list) to a role */
+    addExistingSkillToRole: (roleId: string, skill: Skill) => {
+      const roleSkill: RoleSkill = {
+        id: skill.id,
+        name: skill.name,
+        level: skill.level,
+        category: null,
+      };
+      dispatch({ type: 'ADD_ROLE_SKILL', roleId, skill: roleSkill, syncToMain: false });
+    },
+    
+    removeRoleSkill: (roleId: string, skillId: string) => {
+      dispatch({ type: 'REMOVE_ROLE_SKILL', roleId, skillId });
     },
   };
 }

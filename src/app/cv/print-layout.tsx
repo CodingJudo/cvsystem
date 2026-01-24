@@ -48,9 +48,20 @@ function PrintRole({ role, locale }: { role: Role; locale: Locale }) {
         <div className="role-title-company">
           <h3 className="role-title">{role.title || 'Untitled Role'}</h3>
           {role.company && <span className="role-company">{role.company}</span>}
+          {role.location && <span className="role-location">{role.location}</span>}
         </div>
         {dateRange && <span className="role-date">{dateRange}</span>}
       </div>
+      {role.skills.length > 0 && (
+        <div className="role-skills">
+          {role.skills.map((skill, idx) => (
+            <span key={skill.id}>
+              {idx > 0 && ' • '}
+              {skill.name}
+            </span>
+          ))}
+        </div>
+      )}
       {description && (
         <p className="role-description">{description}</p>
       )}
@@ -127,14 +138,14 @@ export function PrintLayout({ cv, locale }: PrintLayoutProps) {
         </section>
       )}
 
-      {/* Work Experience */}
-      {cv.roles.length > 0 && (
+      {/* Work Experience - only show visible roles */}
+      {cv.roles.filter(r => r.visible).length > 0 && (
         <section className="cv-section">
           <h2 className="section-title">
             {locale === 'sv' ? 'Erfarenhet' : 'Experience'}
           </h2>
           <div className="roles-container">
-            {cv.roles.map((role) => (
+            {cv.roles.filter(r => r.visible).map((role) => (
               <PrintRole key={role.id} role={role} locale={locale} />
             ))}
           </div>
@@ -263,6 +274,19 @@ export function PrintLayout({ cv, locale }: PrintLayoutProps) {
         .role-company {
           font-size: 11pt;
           color: #444;
+        }
+
+        .role-location {
+          font-size: 10pt;
+          color: #666;
+          font-style: italic;
+        }
+
+        .role-skills {
+          font-size: 9pt;
+          color: #555;
+          margin: 4pt 0;
+          font-style: italic;
         }
 
         .role-date {

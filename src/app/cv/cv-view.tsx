@@ -2,13 +2,13 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import type { DomainCV, Locale, BilingualText, Role } from '@/domain/model/cv';
+import type { DomainCV, Locale, BilingualText } from '@/domain/model/cv';
 import { CVProvider, useCVState, useCVActions } from '@/lib/store/cv-store';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
 import { SkillsEditor } from './skill-editor';
+import { RolesEditor } from './role-editor';
 
 interface CVViewProps {
   cv: DomainCV;
@@ -31,34 +31,6 @@ function formatDate(dateStr: string | null | undefined): string {
   } catch {
     return dateStr;
   }
-}
-
-function RoleCard({ role, locale }: { role: Role; locale: Locale }) {
-  const dateRange = [
-    formatDate(role.start),
-    role.isCurrent ? 'Present' : formatDate(role.end),
-  ].filter(Boolean).join(' – ');
-
-  const description = getBilingualText(role.description, locale);
-
-  return (
-    <div className="border-l-2 border-zinc-200 pl-4 dark:border-zinc-700">
-      <div className="flex flex-col gap-1">
-        <h4 className="font-semibold">{role.title || 'Untitled Role'}</h4>
-        {role.company && (
-          <p className="text-sm text-zinc-600 dark:text-zinc-400">{role.company}</p>
-        )}
-        {dateRange && (
-          <p className="text-xs text-zinc-500">{dateRange}</p>
-        )}
-      </div>
-      {description && (
-        <p className="mt-2 text-sm text-zinc-700 dark:text-zinc-300 whitespace-pre-line line-clamp-4">
-          {description}
-        </p>
-      )}
-    </div>
-  );
 }
 
 function CVContent({ warnings, initialCv }: { warnings: string[]; initialCv: DomainCV }) {
@@ -178,29 +150,17 @@ function CVContent({ warnings, initialCv }: { warnings: string[]; initialCv: Dom
         </Card>
       )}
 
-      {/* Roles / Work Experience */}
-      <Card>
-        <CardHeader>
-          <CardTitle>{locale === 'sv' ? 'Uppdrag & Erfarenhet' : 'Roles & Experience'}</CardTitle>
-          <CardDescription>
-            {displayCv.roles.length} {locale === 'sv' ? 'uppdrag' : 'roles'}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {displayCv.roles.length > 0 ? (
-            <div className="space-y-6">
-              {displayCv.roles.map((role, index) => (
-                <div key={role.id}>
-                  <RoleCard role={role} locale={locale} />
-                  {index < displayCv.roles.length - 1 && <Separator className="mt-6" />}
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-zinc-500 italic">No roles extracted</p>
-          )}
-        </CardContent>
-      </Card>
+      {/* Roles / Work Experience Editor */}
+      {isInitialized ? (
+        <RolesEditor locale={locale} />
+      ) : (
+        <Card>
+          <CardHeader>
+            <CardTitle>{locale === 'sv' ? 'Uppdrag & Erfarenhet' : 'Roles & Experience'}</CardTitle>
+            <CardDescription>Loading...</CardDescription>
+          </CardHeader>
+        </Card>
+      )}
 
       {/* Stats Footer */}
       <div className="flex justify-center gap-8 text-sm text-zinc-500">

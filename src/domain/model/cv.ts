@@ -27,17 +27,34 @@ export interface Skill {
 }
 
 /**
+ * A skill/technology linked to a specific role
+ */
+export interface RoleSkill {
+  id: string;
+  name: string;
+  level?: number | null;
+  /** Category: Techniques, Tools, Platforms, etc. (from keywordTypeName) */
+  category?: string | null;
+}
+
+/**
  * A work experience / role / assignment entry
  */
 export interface Role {
   id: string;
   title: string | null;
   company: string | null;
+  /** Location (city, country) */
+  location?: string | null;
   start?: string | null;
   end?: string | null;
   /** Whether this is the current role (no end date) */
   isCurrent?: boolean;
   description: BilingualText;
+  /** Technologies/skills used in this role */
+  skills: RoleSkill[];
+  /** Whether to include this role in exports (maps to !disabled in Cinode) */
+  visible: boolean;
 }
 
 /**

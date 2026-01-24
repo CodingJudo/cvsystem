@@ -49,6 +49,26 @@ const createSampleSv = (overrides: Record<string, unknown> = {}) => ({
             startDate: '2022-01-01T00:00:00',
             endDate: '2024-01-01T00:00:00',
             isCurrent: false,
+            disabled: false,
+            location: {
+              city: 'Stockholm',
+              country: 'Sverige',
+              formattedAddress: 'Stockholm, Sverige',
+            },
+            skills: [
+              {
+                id: 'role-skill-1',
+                name: 'React',
+                level: 4,
+                keywordTypeName: 'Techniques',
+              },
+              {
+                id: 'role-skill-2',
+                name: 'Node.js',
+                level: 3,
+                keywordTypeName: 'Techniques',
+              },
+            ],
           },
         ],
       },
@@ -104,6 +124,26 @@ const createSampleEn = (overrides: Record<string, unknown> = {}) => ({
             startDate: '2022-01-01T00:00:00',
             endDate: '2024-01-01T00:00:00',
             isCurrent: false,
+            disabled: false,
+            location: {
+              city: 'Stockholm',
+              country: 'Sweden',
+              formattedAddress: 'Stockholm, Sweden',
+            },
+            skills: [
+              {
+                id: 'role-skill-1',
+                name: 'React',
+                level: 4,
+                keywordTypeName: 'Techniques',
+              },
+              {
+                id: 'role-skill-2',
+                name: 'Node.js',
+                level: 3,
+                keywordTypeName: 'Techniques',
+              },
+            ],
           },
         ],
       },
@@ -162,6 +202,35 @@ describe('extractCv', () => {
       expect(result.cv.roles[0].company).toBe('Tech Company AB');
       expect(result.cv.roles[0].description.sv).toBe('Ledde utvecklingsteam för webbprojekt.');
       expect(result.cv.roles[0].description.en).toBe('Led development team for web projects.');
+    });
+
+    it('extracts role skills/technologies', () => {
+      const result = extractCv(createSampleSv(), createSampleEn());
+
+      expect(result.cv.roles[0].skills).toHaveLength(2);
+      
+      const reactSkill = result.cv.roles[0].skills.find(s => s.name === 'React');
+      expect(reactSkill).toBeDefined();
+      expect(reactSkill?.level).toBe(4);
+      expect(reactSkill?.category).toBe('Techniques');
+
+      const nodeSkill = result.cv.roles[0].skills.find(s => s.name === 'Node.js');
+      expect(nodeSkill).toBeDefined();
+      expect(nodeSkill?.level).toBe(3);
+    });
+
+    it('extracts role location', () => {
+      const result = extractCv(createSampleSv(), createSampleEn());
+
+      // Should use Swedish location (primary)
+      expect(result.cv.roles[0].location).toBe('Stockholm, Sverige');
+    });
+
+    it('extracts role visibility from disabled flag', () => {
+      const result = extractCv(createSampleSv(), createSampleEn());
+
+      // disabled: false means visible: true
+      expect(result.cv.roles[0].visible).toBe(true);
     });
 
     it('extracts updatedAt timestamp', () => {
@@ -388,6 +457,8 @@ describe('extractCv', () => {
                   startDate: '2023-01-01T00:00:00',
                   endDate: null,
                   isCurrent: true,
+                  disabled: false,
+                  skills: [],
                 },
               ],
             },
@@ -400,6 +471,128 @@ describe('extractCv', () => {
       const role = result.cv.roles.find((r) => r.id === 'current-role');
       expect(role?.isCurrent).toBe(true);
       expect(role?.end).toBeNull();
+      expect(role?.visible).toBe(true);
+      expect(role?.skills).toHaveLength(0);
+    });
+
+    it('marks disabled roles as not visible', () => {
+      const sv = {
+        ...createSampleSv(),
+        resume: {
+          blocks: [
+            {
+              friendlyBlockName: 'WorkExperiences',
+              data: [
+                {
+                  id: 'hidden-role',
+                  title: 'Hidden Position',
+                  employer: 'Hidden Company',
+                  description: 'Hidden work',
+                  startDate: '2020-01-01T00:00:00',
+                  endDate: '2021-01-01T00:00:00',
+                  disabled: true,
+                  skills: [],
+                },
+              ],
+            },
+          ],
+        },
+      };
+
+      const result = extractCv(sv, {});
+
+      const role = result.cv.roles.find((r) => r.id === 'hidden-role');
+      expect(role?.visible).toBe(false);
+    });
+
+    it('handles roles without location', () => {
+      const sv = {
+        ...createSampleSv(),
+        resume: {
+          blocks: [
+            {
+              friendlyBlockName: 'WorkExperiences',
+              data: [
+                {
+                  id: 'no-location-role',
+                  title: 'Remote Position',
+                  employer: 'Remote Company',
+                  description: 'Remote work',
+                  startDate: '2022-01-01T00:00:00',
+                  endDate: null,
+                  disabled: false,
+                  skills: [],
+                },
+              ],
+            },
+          ],
+        },
+      };
+
+      const result = extractCv(sv, {});
+
+      const role = result.cv.roles.find((r) => r.id === 'no-location-role');
+      expect(role?.location).toBeNull();
+    });
+
+    it('handles roles with only city in location', () => {
+      const sv = {
+        ...createSampleSv(),
+        resume: {
+          blocks: [
+            {
+              friendlyBlockName: 'WorkExperiences',
+              data: [
+                {
+                  id: 'city-only-role',
+                  title: 'City Position',
+                  employer: 'City Company',
+                  description: 'City work',
+                  startDate: '2022-01-01T00:00:00',
+                  endDate: null,
+                  disabled: false,
+                  location: { city: 'Göteborg' },
+                  skills: [],
+                },
+              ],
+            },
+          ],
+        },
+      };
+
+      const result = extractCv(sv, {});
+
+      const role = result.cv.roles.find((r) => r.id === 'city-only-role');
+      expect(role?.location).toBe('Göteborg');
+    });
+
+    it('defaults to visible when disabled field is missing', () => {
+      const sv = {
+        ...createSampleSv(),
+        resume: {
+          blocks: [
+            {
+              friendlyBlockName: 'WorkExperiences',
+              data: [
+                {
+                  id: 'no-disabled-field',
+                  title: 'No Disabled Field',
+                  employer: 'Test Company',
+                  description: 'Test work',
+                  startDate: '2022-01-01T00:00:00',
+                  endDate: null,
+                  skills: [],
+                },
+              ],
+            },
+          ],
+        },
+      };
+
+      const result = extractCv(sv, {});
+
+      const role = result.cv.roles.find((r) => r.id === 'no-disabled-field');
+      expect(role?.visible).toBe(true);
     });
   });
 });

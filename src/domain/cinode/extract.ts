@@ -5,7 +5,7 @@
  * See paths.md for documentation of which JSON paths are mapped.
  */
 
-import type { DomainCV, Skill, Role, Locale, BilingualText } from '../model/cv';
+import type { DomainCV, Skill, Role, RoleSkill, Locale, BilingualText } from '../model/cv';
 
 /**
  * Result of extracting a DomainCV from Cinode JSON
@@ -71,6 +71,20 @@ function getArray(obj: unknown, path: string): unknown[] | null {
   }
 
   return isArray(current) ? current : null;
+}
+
+function getBoolean(obj: unknown, path: string): boolean | null {
+  if (!isObject(obj)) return null;
+
+  const parts = path.split('.');
+  let current: unknown = obj;
+
+  for (const part of parts) {
+    if (!isObject(current)) return null;
+    current = current[part];
+  }
+
+  return typeof current === 'boolean' ? current : null;
 }
 
 /**
@@ -236,6 +250,58 @@ function extractSkills(raw: unknown, warnings: string[]): Skill[] {
 }
 
 /**
+ * Extract skills linked to a specific role/work experience
+ */
+function extractRoleSkills(item: Record<string, unknown>): RoleSkill[] {
+  const skillsArray = getArray(item, 'skills');
+  if (!skillsArray) return [];
+
+  const roleSkills: RoleSkill[] = [];
+  const seenIds = new Set<string>();
+
+  for (const skill of skillsArray) {
+    if (!isObject(skill)) continue;
+
+    const id = getString(skill, 'id') ?? getString(skill, 'blockItemId');
+    const name = getString(skill, 'name');
+
+    if (!name) continue;
+    if (id && seenIds.has(id)) continue;
+    if (id) seenIds.add(id);
+
+    const level = getNumber(skill, 'level');
+    const category = getString(skill, 'keywordTypeName');
+
+    roleSkills.push({
+      id: id ?? `role-skill-${roleSkills.length}`,
+      name,
+      level,
+      category,
+    });
+  }
+
+  return roleSkills;
+}
+
+/**
+ * Extract location string from Cinode location object
+ */
+function extractLocation(item: Record<string, unknown>): string | null {
+  if (!isObject(item.location)) return null;
+  
+  const location = item.location as Record<string, unknown>;
+  const city = getString(location, 'city');
+  const country = getString(location, 'country');
+  
+  if (city && country) return `${city}, ${country}`;
+  if (city) return city;
+  if (country) return country;
+  
+  // Fallback to formattedAddress
+  return getString(location, 'formattedAddress');
+}
+
+/**
  * Extract work experiences from the relevant blocks
  * Cinode uses different block types: HighlightedWorkExperiences, WorkExperiences
  */
@@ -305,6 +371,19 @@ function extractRoles(
     const endDate = getString(itemSv, 'endDate');
     const isCurrent = itemSv.isCurrent === true;
 
+    // Extract location from the item
+    const location = extractLocation(itemSv);
+
+    // Extract skills/technologies linked to this role
+    // Prefer English skills (usually have more data), fall back to Swedish
+    const roleSkills = isObject(itemEn) 
+      ? extractRoleSkills(itemEn as Record<string, unknown>)
+      : extractRoleSkills(itemSv);
+
+    // Visibility: visible = !disabled (disabled means hidden in Cinode)
+    const disabled = getBoolean(itemSv, 'disabled');
+    const visible = disabled === null ? true : !disabled;
+
     const descriptionSv = getString(itemSv, 'description');
     const descriptionEn = isObject(itemEn) ? getString(itemEn, 'description') : null;
 
@@ -312,6 +391,7 @@ function extractRoles(
       id,
       title,
       company: employer,
+      location,
       start: startDate,
       end: endDate,
       isCurrent,
@@ -319,6 +399,8 @@ function extractRoles(
         sv: descriptionSv,
         en: descriptionEn,
       },
+      skills: roleSkills,
+      visible,
     });
   }
 
