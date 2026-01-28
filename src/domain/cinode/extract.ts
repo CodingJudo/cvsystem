@@ -19,6 +19,7 @@ import type {
   CommitmentType,
   Contacts,
   FeaturedProject,
+  CoverPageGroups,
 } from '../model/cv';
 
 /**
@@ -400,6 +401,82 @@ function extractSkills(raw: unknown, warnings: string[]): Skill[] {
   }
 
   return skills;
+}
+
+function uniqueNonEmptyStrings(values: Array<string | null | undefined>): string[] {
+  const out: string[] = [];
+  const seen = new Set<string>();
+  for (const v of values) {
+    const s = (v ?? '').trim();
+    if (!s) continue;
+    const key = s.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(s);
+  }
+  return out;
+}
+
+function extractCoverPageGroups(raw: unknown, warnings: string[]): CoverPageGroups {
+  const blocks = getArray(raw, 'resume.blocks');
+  if (!blocks) {
+    warnings.push('Missing resume.blocks array (coverPageGroups)');
+    return { roles: [], expertKnowledge: [], languages: [] };
+  }
+
+  // Roles: from SkillsByCategory where keywordTypeId === 2 ("Roller"/"Roles")
+  const roles: string[] = [];
+  const skillsByCategory = findBlock(blocks, 'SkillsByCategory');
+  if (skillsByCategory) {
+    const data = getArray(skillsByCategory, 'data');
+    if (data) {
+      for (const category of data) {
+        if (!isObject(category)) continue;
+        const keywordTypeId = getNumber(category, 'keywordTypeId');
+        if (keywordTypeId !== 2) continue;
+        const skills = getArray(category, 'skills') ?? [];
+        for (const sk of skills) {
+          if (!isObject(sk)) continue;
+          const name = getString(sk, 'name');
+          if (name) roles.push(name);
+        }
+      }
+    }
+  }
+
+  // Expert knowledge: from TopSkills block
+  const expertKnowledge: string[] = [];
+  const topSkills = findBlock(blocks, 'TopSkills');
+  if (topSkills) {
+    const data = getArray(topSkills, 'data');
+    if (data) {
+      for (const item of data) {
+        if (!isObject(item)) continue;
+        const name = getString(item, 'name');
+        if (name) expertKnowledge.push(name);
+      }
+    }
+  }
+
+  // Languages: from Languages block
+  const languages: string[] = [];
+  const languagesBlock = findBlock(blocks, 'Languages');
+  if (languagesBlock) {
+    const data = getArray(languagesBlock, 'data');
+    if (data) {
+      for (const item of data) {
+        if (!isObject(item)) continue;
+        const name = getString(item, 'name');
+        if (name) languages.push(name);
+      }
+    }
+  }
+
+  return {
+    roles: uniqueNonEmptyStrings(roles),
+    expertKnowledge: uniqueNonEmptyStrings(expertKnowledge),
+    languages: uniqueNonEmptyStrings(languages),
+  };
 }
 
 /**
@@ -822,6 +899,15 @@ export function extractCv(rawSv: unknown, rawEn: unknown): ExtractionResult {
     website: contactsSv.website ?? contactsEn.website ?? null,
   };
 
+  // Cover-page groups (prefer Swedish values, fallback to English per-list)
+  const groupsSv = extractCoverPageGroups(rawSv, warnings);
+  const groupsEn = extractCoverPageGroups(rawEn, warnings);
+  const coverPageGroups: CoverPageGroups = {
+    roles: groupsSv.roles.length ? groupsSv.roles : groupsEn.roles,
+    expertKnowledge: groupsSv.expertKnowledge.length ? groupsSv.expertKnowledge : groupsEn.expertKnowledge,
+    languages: groupsSv.languages.length ? groupsSv.languages : groupsEn.languages,
+  };
+
   // Skills (merge from both, deduplicate)
   const skillsSv = extractSkills(rawSv, warnings);
   const skillsEn = extractSkills(rawEn, warnings);
@@ -870,6 +956,7 @@ export function extractCv(rawSv: unknown, rawEn: unknown): ExtractionResult {
       en: summaryEn,
     },
     contacts,
+    coverPageGroups,
     featuredProjects,
     skills,
     roles,

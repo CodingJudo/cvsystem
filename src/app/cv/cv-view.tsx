@@ -17,6 +17,7 @@ import { SummaryEditor } from './summary-editor';
 import { PhotoSelector } from './photo-selector';
 import { ContactsEditor } from './contacts-editor';
 import { FeaturedProjectsEditor } from './featured-projects-editor';
+import { CoverPageGroupsEditor } from './cover-page-groups-editor';
 import { ImportDialog } from '@/components/import';
 import { downloadCvAsJson, type ImportResult } from '@/lib/file-formats';
 
@@ -217,6 +218,20 @@ function CVContent({ warnings, initialCv }: { warnings: string[]; initialCv: Dom
             <CardHeader>
               <CardTitle className="text-[var(--geisli-secondary)]">
                 {locale === 'sv' ? 'Kontakt' : 'Contact'}
+              </CardTitle>
+              <CardDescription>{locale === 'sv' ? 'Laddar...' : 'Loading...'}</CardDescription>
+            </CardHeader>
+          </Card>
+        )}
+
+        {/* Cover page groups (roles, expert knowledge, languages) */}
+        {isInitialized ? (
+          <CoverPageGroupsEditor locale={locale} />
+        ) : (
+          <Card className="border-none shadow-lg bg-white">
+            <CardHeader>
+              <CardTitle className="text-[var(--geisli-secondary)]">
+                {locale === 'sv' ? 'Framsida – extra grupper' : 'Cover page – extra groups'}
               </CardTitle>
               <CardDescription>{locale === 'sv' ? 'Laddar...' : 'Loading...'}</CardDescription>
             </CardHeader>

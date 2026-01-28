@@ -39,6 +39,18 @@ export interface FeaturedProject {
 }
 
 /**
+ * Additional cover-page groups (manual, editable lists).
+ */
+export interface CoverPageGroups {
+  /** Roles (custom labels) to highlight on the cover page */
+  roles: string[];
+  /** Expert knowledge (custom list) */
+  expertKnowledge: string[];
+  /** Languages (free text list) */
+  languages: string[];
+}
+
+/**
  * A skill entry from the CV
  */
 export interface Skill {
@@ -201,6 +213,8 @@ export interface DomainCV {
   photoDataUrl?: string | null;
   /** Featured projects ("Utvalda projekt") */
   featuredProjects?: FeaturedProject[];
+  /** Additional cover-page highlight groups */
+  coverPageGroups?: CoverPageGroups;
   /** All skills extracted from the CV */
   skills: Skill[];
   /** Work experiences / assignments / roles */

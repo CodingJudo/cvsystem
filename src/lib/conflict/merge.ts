@@ -33,6 +33,10 @@ export function mergeWithResolutions(
   const hasAnyFeaturedProjects = (cv: DomainCV): boolean => {
     return Boolean(cv.featuredProjects && cv.featuredProjects.length > 0);
   };
+  const hasAnyCoverPageGroups = (cv: DomainCV): boolean => {
+    const g = cv.coverPageGroups;
+    return Boolean(g && (g.roles.length || g.expertKnowledge.length || g.languages.length));
+  };
 
   // Start with a copy of current
   const merged: DomainCV = {
@@ -53,6 +57,15 @@ export function mergeWithResolutions(
   }
   if (!hasAnyFeaturedProjects(current) && hasAnyFeaturedProjects(incoming)) {
     merged.featuredProjects = incoming.featuredProjects ? incoming.featuredProjects.map((p) => ({ ...p, description: { ...p.description } })) : incoming.featuredProjects;
+  }
+  if (!hasAnyCoverPageGroups(current) && hasAnyCoverPageGroups(incoming)) {
+    merged.coverPageGroups = incoming.coverPageGroups
+      ? {
+          roles: [...incoming.coverPageGroups.roles],
+          expertKnowledge: [...incoming.coverPageGroups.expertKnowledge],
+          languages: [...incoming.coverPageGroups.languages],
+        }
+      : incoming.coverPageGroups;
   }
   
   // Apply title resolution
