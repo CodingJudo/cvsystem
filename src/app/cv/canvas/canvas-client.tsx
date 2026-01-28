@@ -1,12 +1,14 @@
 'use client';
 
-import { useState, useRef } from 'react';
-import { useRouter } from 'next/navigation';
+import { useMemo, useRef, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import type { DomainCV, Locale } from '@/domain/model/cv';
 import { PrintLayout } from '../print-layout';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { downloadElementAsImage, type ImageFormat } from '@/lib/canvas-export';
+import { DEFAULT_PRINT_THEME_ID } from '@/lib/print-themes';
+import { getDefaultPrintTheme, getPrintThemeById, readPersistedPrintThemeId } from '../preview/theme-selector';
 
 interface CanvasClientProps {
   cv: DomainCV;
@@ -14,10 +16,25 @@ interface CanvasClientProps {
 
 export function CanvasClient({ cv }: CanvasClientProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [locale, setLocale] = useState<Locale>(cv.locales[0] ?? 'sv');
   const [isExporting, setIsExporting] = useState(false);
   const [scale, setScale] = useState(2);
   const contentRef = useRef<HTMLDivElement>(null);
+  const [themeId] = useState<string>(() => {
+    const fromUrl = searchParams?.get('theme');
+    if (getPrintThemeById(fromUrl)) return fromUrl!;
+
+    const persisted = readPersistedPrintThemeId();
+    if (getPrintThemeById(persisted)) return persisted!;
+
+    return DEFAULT_PRINT_THEME_ID;
+  });
+
+  const selectedTheme = useMemo(() => {
+    const fromUrl = searchParams?.get('theme');
+    return getPrintThemeById(fromUrl) ?? getPrintThemeById(themeId) ?? getDefaultPrintTheme();
+  }, [searchParams, themeId]);
 
   const handleExport = async (format: ImageFormat) => {
     if (!contentRef.current) return;
@@ -106,9 +123,10 @@ export function CanvasClient({ cv }: CanvasClientProps) {
       {/* Preview Area */}
       <div className="py-8">
         <div className="max-w-5xl mx-auto px-4">
+          <link rel="stylesheet" href={selectedTheme.href} />
           <div 
             ref={contentRef}
-            className="bg-white shadow-lg mx-auto"
+            className={`${selectedTheme.className} shadow-lg mx-auto`}
             style={{ width: '210mm', minHeight: '297mm' }}
           >
             <PrintLayout cv={cv} locale={locale} />

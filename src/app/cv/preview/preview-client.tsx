@@ -1,12 +1,19 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useMemo, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import type { DomainCV, Locale } from '@/domain/model/cv';
 import { PrintLayout } from '../print-layout';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { DEFAULT_PRINT_THEME_ID } from '@/lib/print-themes';
+import {
+  getDefaultPrintTheme,
+  getPrintThemeById,
+  readPersistedPrintThemeId,
+  ThemeSelector,
+} from './theme-selector';
 
 interface PreviewClientProps {
   cv: DomainCV;
@@ -14,7 +21,22 @@ interface PreviewClientProps {
 
 export function PreviewClient({ cv }: PreviewClientProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [locale, setLocale] = useState<Locale>(cv.locales[0] ?? 'sv');
+  const [themeId, setThemeId] = useState<string>(() => {
+    const fromUrl = searchParams?.get('theme');
+    if (getPrintThemeById(fromUrl)) return fromUrl!;
+
+    const persisted = readPersistedPrintThemeId();
+    if (getPrintThemeById(persisted)) return persisted!;
+
+    return DEFAULT_PRINT_THEME_ID;
+  });
+
+  const selectedTheme = useMemo(() => {
+    const fromUrl = searchParams?.get('theme');
+    return getPrintThemeById(fromUrl) ?? getPrintThemeById(themeId) ?? getDefaultPrintTheme();
+  }, [searchParams, themeId]);
 
   const handlePrint = () => {
     window.print();
@@ -32,6 +54,7 @@ export function PreviewClient({ cv }: PreviewClientProps) {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>CV - ${cv.name.first} ${cv.name.last}</title>
+  <link rel="stylesheet" href="${selectedTheme.href}">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
@@ -39,14 +62,15 @@ export function PreviewClient({ cv }: PreviewClientProps) {
       max-width: 210mm;
       margin: 0 auto;
       padding: 20mm;
-      color: #1a1a1a;
+      background: var(--cv-page-bg, #ffffff);
+      color: var(--cv-text, #1a1a1a);
       font-size: 11pt;
       line-height: 1.5;
     }
     .cv-header {
       text-align: center;
       margin-bottom: 24pt;
-      border-bottom: 2pt solid #333;
+      border-bottom: 2pt solid var(--cv-border-strong, #333);
       padding-bottom: 16pt;
     }
     .cv-name {
@@ -57,7 +81,7 @@ export function PreviewClient({ cv }: PreviewClientProps) {
     }
     .cv-title {
       font-size: 14pt;
-      color: #444;
+      color: var(--cv-muted, #444);
       margin: 0;
       font-style: italic;
     }
@@ -67,9 +91,9 @@ export function PreviewClient({ cv }: PreviewClientProps) {
     .section-title {
       font-size: 14pt;
       font-weight: bold;
-      color: #333;
+      color: var(--cv-text, #333);
       margin: 0 0 10pt 0;
-      border-bottom: 1pt solid #ccc;
+      border-bottom: 1pt solid var(--cv-border, #ccc);
       padding-bottom: 4pt;
       text-transform: uppercase;
       letter-spacing: 1pt;
@@ -91,11 +115,11 @@ export function PreviewClient({ cv }: PreviewClientProps) {
     .skill-level-label {
       font-weight: bold;
       min-width: 100pt;
-      color: #555;
+      color: var(--cv-muted, #555);
     }
     .skill-list { flex: 1; }
     .skill-level, .skill-years {
-      color: #666;
+      color: var(--cv-muted-2, #666);
       font-size: 9pt;
     }
     .roles-container {
@@ -121,26 +145,26 @@ export function PreviewClient({ cv }: PreviewClientProps) {
     }
     .role-company {
       font-size: 11pt;
-      color: #444;
+      color: var(--cv-muted, #444);
     }
     .role-date {
       font-size: 10pt;
-      color: #666;
+      color: var(--cv-muted-2, #666);
       white-space: nowrap;
     }
     .role-description {
       margin: 6pt 0 0 0;
       text-align: justify;
       font-size: 10pt;
-      color: #333;
+      color: var(--cv-text, #333);
     }
     .cv-footer {
       margin-top: 24pt;
       padding-top: 12pt;
-      border-top: 1pt solid #ccc;
+      border-top: 1pt solid var(--cv-border, #ccc);
       text-align: center;
       font-size: 9pt;
-      color: #888;
+      color: var(--cv-muted-2, #888);
     }
     @media print {
       body { padding: 0; max-width: none; }
@@ -149,8 +173,10 @@ export function PreviewClient({ cv }: PreviewClientProps) {
     }
   </style>
 </head>
-<body>
+<body class="${selectedTheme.className}">
+<div id="print-container" class="${selectedTheme.className}">
 ${printContainer.innerHTML}
+</div>
 </body>
 </html>`;
 
@@ -191,6 +217,8 @@ ${printContainer.innerHTML}
               </TabsList>
             </Tabs>
 
+            <ThemeSelector value={selectedTheme.id} onThemeChange={setThemeId} />
+
             <Button variant="outline" onClick={handleDownloadHtml}>
               Download HTML
             </Button>
@@ -206,9 +234,10 @@ ${printContainer.innerHTML}
 
       {/* Preview Area */}
       <div className="py-8 print:py-0">
+        <link rel="stylesheet" href={selectedTheme.href} />
         <div 
           id="print-container"
-          className="bg-white shadow-lg mx-auto print:shadow-none print:mx-0"
+          className={`${selectedTheme.className} shadow-lg mx-auto print:shadow-none print:mx-0`}
           style={{ width: '210mm', minHeight: '297mm' }}
         >
           <PrintLayout cv={cv} locale={locale} />
@@ -219,7 +248,7 @@ ${printContainer.innerHTML}
       <style jsx global>{`
         @media print {
           body {
-            background: white !important;
+            background: transparent !important;
           }
           .print\\:hidden {
             display: none !important;

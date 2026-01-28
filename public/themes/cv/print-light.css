@@ -1,0 +1,13 @@
+.printTheme--light {
+  --cv-page-bg: #ffffff;
+  --cv-text: #1a1a1a;
+  --cv-muted: #555555;
+  --cv-muted-2: #666666;
+  --cv-border: #cccccc;
+  --cv-border-strong: #333333;
+}
+
+.printTheme--light .print-cv {
+  background: var(--cv-page-bg);
+  color: var(--cv-text);
+}

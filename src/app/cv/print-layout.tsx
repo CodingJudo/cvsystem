@@ -279,7 +279,8 @@ export function PrintLayout({ cv, locale }: PrintLayoutProps) {
           max-width: 210mm;
           margin: 0 auto;
           padding: 20mm;
-          color: #1a1a1a;
+          background: var(--cv-page-bg, #ffffff);
+          color: var(--cv-text, #1a1a1a);
           font-size: 11pt;
           line-height: 1.5;
         }
@@ -287,7 +288,7 @@ export function PrintLayout({ cv, locale }: PrintLayoutProps) {
         .cv-header {
           text-align: center;
           margin-bottom: 24pt;
-          border-bottom: 2pt solid #333;
+          border-bottom: 2pt solid var(--cv-border-strong, #333);
           padding-bottom: 16pt;
         }
 
@@ -300,7 +301,7 @@ export function PrintLayout({ cv, locale }: PrintLayoutProps) {
 
         .cv-title {
           font-size: 14pt;
-          color: #444;
+          color: var(--cv-muted, #444);
           margin: 0;
           font-style: italic;
         }
@@ -312,9 +313,9 @@ export function PrintLayout({ cv, locale }: PrintLayoutProps) {
         .section-title {
           font-size: 14pt;
           font-weight: bold;
-          color: #333;
+          color: var(--cv-text, #333);
           margin: 0 0 10pt 0;
-          border-bottom: 1pt solid #ccc;
+          border-bottom: 1pt solid var(--cv-border, #ccc);
           padding-bottom: 4pt;
           text-transform: uppercase;
           letter-spacing: 1pt;
@@ -340,7 +341,7 @@ export function PrintLayout({ cv, locale }: PrintLayoutProps) {
         .skill-level-label {
           font-weight: bold;
           min-width: 100pt;
-          color: #555;
+          color: var(--cv-muted, #555);
         }
 
         .skill-list {
@@ -352,7 +353,7 @@ export function PrintLayout({ cv, locale }: PrintLayoutProps) {
         }
 
         .skill-level, .skill-years {
-          color: #666;
+          color: var(--cv-muted-2, #666);
           font-size: 9pt;
         }
 
@@ -386,25 +387,25 @@ export function PrintLayout({ cv, locale }: PrintLayoutProps) {
 
         .role-company {
           font-size: 11pt;
-          color: #444;
+          color: var(--cv-muted, #444);
         }
 
         .role-location {
           font-size: 10pt;
-          color: #666;
+          color: var(--cv-muted-2, #666);
           font-style: italic;
         }
 
         .role-skills {
           font-size: 9pt;
-          color: #555;
+          color: var(--cv-muted, #555);
           margin: 4pt 0;
           font-style: italic;
         }
 
         .role-date {
           font-size: 10pt;
-          color: #666;
+          color: var(--cv-muted-2, #666);
           white-space: nowrap;
         }
 
@@ -412,16 +413,16 @@ export function PrintLayout({ cv, locale }: PrintLayoutProps) {
           margin: 6pt 0 0 0;
           text-align: justify;
           font-size: 10pt;
-          color: #333;
+          color: var(--cv-text, #333);
         }
 
         .cv-footer {
           margin-top: 24pt;
           padding-top: 12pt;
-          border-top: 1pt solid #ccc;
+          border-top: 1pt solid var(--cv-border, #ccc);
           text-align: center;
           font-size: 9pt;
-          color: #888;
+          color: var(--cv-muted-2, #888);
         }
 
         /* Education styles */
@@ -454,19 +455,19 @@ export function PrintLayout({ cv, locale }: PrintLayoutProps) {
 
         .education-school {
           font-size: 10pt;
-          color: #444;
+          color: var(--cv-muted, #444);
         }
 
         .education-date {
           font-size: 10pt;
-          color: #666;
+          color: var(--cv-muted-2, #666);
           white-space: nowrap;
         }
 
         .education-description {
           margin: 4pt 0 0 0;
           font-size: 10pt;
-          color: #555;
+          color: var(--cv-muted, #555);
         }
 
         /* Training styles */
@@ -485,16 +486,16 @@ export function PrintLayout({ cv, locale }: PrintLayoutProps) {
         }
 
         .training-issuer {
-          color: #555;
+          color: var(--cv-muted, #555);
         }
 
         .training-year {
-          color: #666;
+          color: var(--cv-muted-2, #666);
         }
 
         .training-type {
           font-size: 9pt;
-          color: #888;
+          color: var(--cv-muted-2, #888);
           font-style: italic;
         }
 
@@ -514,11 +515,11 @@ export function PrintLayout({ cv, locale }: PrintLayoutProps) {
         }
 
         .commitment-venue {
-          color: #555;
+          color: var(--cv-muted, #555);
         }
 
         .commitment-date {
-          color: #666;
+          color: var(--cv-muted-2, #666);
         }
 
         @media print {
