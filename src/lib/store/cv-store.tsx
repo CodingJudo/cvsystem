@@ -24,12 +24,15 @@ function normalizeCv(cv: DomainCV): DomainCV {
     trainings: cv.trainings ?? [],
     educations: cv.educations ?? [],
     commitments: cv.commitments ?? [],
+    photoDataUrl: cv.photoDataUrl ?? null,
   };
 }
 
 // Action types for CV editing
 type CVAction =
   | { type: 'INIT'; cv: DomainCV }
+  | { type: 'UPDATE_SUMMARY'; summary: DomainCV['summary'] }
+  | { type: 'UPDATE_PHOTO'; photoDataUrl: string | null }
   | { type: 'UPDATE_SKILL'; skill: Skill }
   | { type: 'ADD_SKILL'; skill: Skill }
   | { type: 'DELETE_SKILL'; skillId: string }
@@ -118,6 +121,24 @@ function cvReducer(state: CVState, action: CVAction): CVState {
         isInitialized: true,
         metadata: action.metadata ?? null,
         rawCinode: action.rawCinode ?? null,
+      };
+    }
+
+    case 'UPDATE_SUMMARY': {
+      if (!state.cv) return state;
+      return {
+        ...state,
+        cv: { ...state.cv, summary: action.summary },
+        hasChanges: true,
+      };
+    }
+
+    case 'UPDATE_PHOTO': {
+      if (!state.cv) return state;
+      return {
+        ...state,
+        cv: { ...state.cv, photoDataUrl: action.photoDataUrl },
+        hasChanges: true,
       };
     }
 
@@ -706,6 +727,14 @@ export function useCVActions() {
 
   return {
     hasChanges: state.hasChanges,
+
+    updateSummary: (summary: DomainCV['summary']) => {
+      dispatch({ type: 'UPDATE_SUMMARY', summary });
+    },
+
+    updatePhoto: (photoDataUrl: string | null) => {
+      dispatch({ type: 'UPDATE_PHOTO', photoDataUrl });
+    },
     
     resetToOriginal: () => {
       dispatch({ type: 'RESET_TO_ORIGINAL' });

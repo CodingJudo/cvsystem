@@ -173,6 +173,8 @@ export interface DomainCV {
   title: BilingualText;
   /** Summary/about text */
   summary: BilingualText;
+  /** Optional profile photo (data URL) */
+  photoDataUrl?: string | null;
   /** All skills extracted from the CV */
   skills: Skill[];
   /** Work experiences / assignments / roles */

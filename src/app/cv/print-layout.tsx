@@ -147,6 +147,14 @@ export function PrintLayout({ cv, locale }: PrintLayoutProps) {
     <div className="print-cv">
       {/* Header */}
       <header className="cv-header">
+        {cv.photoDataUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={cv.photoDataUrl}
+            alt={`${cv.name.first ?? ''} ${cv.name.last ?? ''}`.trim() || 'Profile photo'}
+            className="cv-photo"
+          />
+        ) : null}
         <h1 className="cv-name">
           {cv.name.first} {cv.name.last}
         </h1>
@@ -290,6 +298,17 @@ export function PrintLayout({ cv, locale }: PrintLayoutProps) {
           margin-bottom: 24pt;
           border-bottom: 2pt solid var(--cv-border-strong, #333);
           padding-bottom: 16pt;
+          position: relative;
+        }
+
+        .cv-photo {
+          width: 64pt;
+          height: 64pt;
+          object-fit: cover;
+          border-radius: 10pt;
+          border: 1pt solid var(--cv-border, #ccc);
+          margin: 0 auto 10pt auto;
+          display: block;
         }
 
         .cv-name {

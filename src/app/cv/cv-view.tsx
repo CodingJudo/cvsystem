@@ -13,6 +13,8 @@ import { RolesEditor } from './role-editor';
 import { TrainingsEditor } from './training-editor';
 import { EducationEditor } from './education-editor';
 import { CommitmentsEditor } from './commitment-editor';
+import { SummaryEditor } from './summary-editor';
+import { PhotoSelector } from './photo-selector';
 import { ImportDialog } from '@/components/import';
 import { downloadCvAsJson, type ImportResult } from '@/lib/file-formats';
 
@@ -155,6 +157,23 @@ function CVContent({ warnings, initialCv }: { warnings: string[]; initialCv: Dom
                 )}
               </div>
 
+              {/* Profile photo selector */}
+              <div className="flex flex-col items-end gap-2">
+                {displayCv.photoDataUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={displayCv.photoDataUrl}
+                    alt={`${displayCv.name.first ?? ''} ${displayCv.name.last ?? ''}`.trim() || 'Profile photo'}
+                    className="h-20 w-20 rounded-lg object-cover border border-gray-200"
+                  />
+                ) : (
+                  <div className="h-20 w-20 rounded-lg bg-gray-100 border border-gray-200 flex items-center justify-center text-xs text-gray-500">
+                    {locale === 'sv' ? 'Ingen bild' : 'No photo'}
+                  </div>
+                )}
+                <PhotoSelector locale={locale} />
+              </div>
+
               {/* Unsaved changes indicator */}
               {hasChanges && (
                 <div className="flex items-center gap-2">
@@ -189,27 +208,27 @@ function CVContent({ warnings, initialCv }: { warnings: string[]; initialCv: Dom
         )}
 
         {/* Summary */}
-        <Card className="border-none shadow-lg bg-white">
-          <CardHeader>
-            <CardTitle className="text-[var(--geisli-secondary)]">
-              {locale === 'sv' ? 'Sammanfattning' : 'Summary'}
-            </CardTitle>
-            <CardDescription>
-              {locale === 'sv' ? 'Professionell profil' : 'Professional profile'}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {summary ? (
-              <p className="whitespace-pre-line text-gray-700">
-                {summary}
-              </p>
-            ) : (
-              <p className="text-gray-400 italic">
-                {locale === 'sv' ? 'Ingen sammanfattning tillgänglig' : 'No summary available'}
-              </p>
-            )}
-          </CardContent>
-        </Card>
+        {isInitialized ? (
+          <SummaryEditor locale={locale} />
+        ) : (
+          <Card className="border-none shadow-lg bg-white">
+            <CardHeader>
+              <CardTitle className="text-[var(--geisli-secondary)]">
+                {locale === 'sv' ? 'Sammanfattning' : 'Summary'}
+              </CardTitle>
+              <CardDescription>{locale === 'sv' ? 'Laddar...' : 'Loading...'}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {summary ? (
+                <p className="whitespace-pre-line text-gray-700">{summary}</p>
+              ) : (
+                <p className="text-gray-400 italic">
+                  {locale === 'sv' ? 'Ingen sammanfattning tillgänglig' : 'No summary available'}
+                </p>
+              )}
+            </CardContent>
+          </Card>
+        )}
 
         {/* Roles / Work Experience Editor - MOVED BEFORE SKILLS */}
         {isInitialized ? (
