@@ -113,7 +113,7 @@ function PrintTraining({ training, locale }: { training: Training; locale: Local
   );
 }
 
-function PrintCommitment({ commitment, locale }: { commitment: Commitment; locale: Locale }) {
+function PrintCommitment({ commitment }: { commitment: Commitment; locale: Locale }) {
   const typeIcon = commitment.commitmentType === 'presentation' ? '🎤 ' :
                    commitment.commitmentType === 'publication' ? '📄 ' : '';
   
@@ -129,6 +129,7 @@ function PrintCommitment({ commitment, locale }: { commitment: Commitment; local
 export function PrintLayout({ cv, locale }: PrintLayoutProps) {
   const summary = getBilingualText(cv.summary, locale);
   const title = getBilingualText(cv.title, locale);
+  const contacts = cv.contacts ?? { email: null, phone: null, address: null, website: null };
 
   // Group skills by level for better presentation
   const skillsByLevel = cv.skills.reduce((acc, skill) => {
@@ -159,6 +160,15 @@ export function PrintLayout({ cv, locale }: PrintLayoutProps) {
           {cv.name.first} {cv.name.last}
         </h1>
         {title && <p className="cv-title">{title}</p>}
+
+        {(contacts.email || contacts.phone || contacts.address || contacts.website) ? (
+          <div className="cv-contacts">
+            {contacts.email ? <span className="cv-contactItem">{contacts.email}</span> : null}
+            {contacts.phone ? <span className="cv-contactItem">{contacts.phone}</span> : null}
+            {contacts.address ? <span className="cv-contactItem">{contacts.address}</span> : null}
+            {contacts.website ? <span className="cv-contactItem">{contacts.website}</span> : null}
+          </div>
+        ) : null}
       </header>
 
       {/* Summary */}
@@ -323,6 +333,20 @@ export function PrintLayout({ cv, locale }: PrintLayoutProps) {
           color: var(--cv-muted, #444);
           margin: 0;
           font-style: italic;
+        }
+
+        .cv-contacts {
+          margin-top: 8pt;
+          display: flex;
+          flex-wrap: wrap;
+          justify-content: center;
+          gap: 6pt 12pt;
+          font-size: 9.5pt;
+          color: var(--cv-muted-2, #666);
+        }
+
+        .cv-contactItem {
+          white-space: nowrap;
         }
 
         .cv-section {

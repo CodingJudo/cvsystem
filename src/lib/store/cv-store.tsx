@@ -8,7 +8,7 @@ import {
   type ReactNode,
   type Dispatch,
 } from 'react';
-import type { DomainCV, Skill, Role, RoleSkill, Training, Education, Commitment } from '@/domain/model/cv';
+import type { DomainCV, Skill, Role, RoleSkill, Training, Education, Commitment, Contacts } from '@/domain/model/cv';
 import type { GeisliCVMetadata, RawCinodeData } from '@/lib/file-formats/types';
 
 // Storage key for localStorage
@@ -25,6 +25,7 @@ function normalizeCv(cv: DomainCV): DomainCV {
     educations: cv.educations ?? [],
     commitments: cv.commitments ?? [],
     photoDataUrl: cv.photoDataUrl ?? null,
+    contacts: cv.contacts ?? { email: null, phone: null, address: null, website: null },
   };
 }
 
@@ -32,6 +33,7 @@ function normalizeCv(cv: DomainCV): DomainCV {
 type CVAction =
   | { type: 'INIT'; cv: DomainCV }
   | { type: 'UPDATE_SUMMARY'; summary: DomainCV['summary'] }
+  | { type: 'UPDATE_CONTACTS'; contacts: Contacts }
   | { type: 'UPDATE_PHOTO'; photoDataUrl: string | null }
   | { type: 'UPDATE_SKILL'; skill: Skill }
   | { type: 'ADD_SKILL'; skill: Skill }
@@ -129,6 +131,15 @@ function cvReducer(state: CVState, action: CVAction): CVState {
       return {
         ...state,
         cv: { ...state.cv, summary: action.summary },
+        hasChanges: true,
+      };
+    }
+
+    case 'UPDATE_CONTACTS': {
+      if (!state.cv) return state;
+      return {
+        ...state,
+        cv: { ...state.cv, contacts: action.contacts },
         hasChanges: true,
       };
     }
@@ -730,6 +741,10 @@ export function useCVActions() {
 
     updateSummary: (summary: DomainCV['summary']) => {
       dispatch({ type: 'UPDATE_SUMMARY', summary });
+    },
+
+    updateContacts: (contacts: Contacts) => {
+      dispatch({ type: 'UPDATE_CONTACTS', contacts });
     },
 
     updatePhoto: (photoDataUrl: string | null) => {

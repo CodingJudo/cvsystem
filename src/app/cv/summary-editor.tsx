@@ -5,7 +5,7 @@ import type { BilingualText, Locale } from '@/domain/model/cv';
 import { useCVActions, useCVState } from '@/lib/store/cv-store';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
 function getBilingualText(text: BilingualText, locale: Locale): string {
   const value = text[locale];
@@ -33,7 +33,7 @@ export function SummaryEditor({ locale }: { locale: Locale }) {
 
   return (
     <Card className="border-none shadow-lg bg-white">
-      <CardHeader className="flex-row items-start justify-between space-y-0">
+      <CardHeader>
         <div>
           <CardTitle className="text-[var(--geisli-secondary)]">
             {locale === 'sv' ? 'Sammanfattning' : 'Summary'}
@@ -43,15 +43,17 @@ export function SummaryEditor({ locale }: { locale: Locale }) {
           </CardDescription>
         </div>
 
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => setIsEditing((v) => !v)}
-          className="text-[var(--geisli-primary)] hover:bg-[var(--geisli-primary)]/10"
-          disabled={!cv}
-        >
-          {isEditing ? (locale === 'sv' ? 'Klar' : 'Done') : (locale === 'sv' ? 'Redigera' : 'Edit')}
-        </Button>
+        <CardAction>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setIsEditing((v) => !v)}
+            className="text-[var(--geisli-primary)] hover:bg-[var(--geisli-primary)]/10"
+            disabled={!cv}
+          >
+            {isEditing ? (locale === 'sv' ? 'Klar' : 'Done') : (locale === 'sv' ? 'Redigera' : 'Edit')}
+          </Button>
+        </CardAction>
       </CardHeader>
 
       <CardContent>

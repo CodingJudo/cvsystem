@@ -17,6 +17,7 @@ import type {
   Education,
   Commitment,
   CommitmentType,
+  Contacts,
 } from '../model/cv';
 
 /**
@@ -159,6 +160,47 @@ function extractTitle(raw: unknown): string | null {
   if (!presentationBlock) return null;
 
   return getString(presentationBlock, 'title');
+}
+
+/**
+ * Extract contact information from ExtendedContactInfoes block.
+ *
+ * This block is not structured like other blocks (no `data[]`); fields are on the block itself.
+ */
+function extractContacts(raw: unknown, warnings: string[]): Contacts {
+  const blocks = getArray(raw, 'resume.blocks');
+  if (!blocks) {
+    warnings.push('Missing resume.blocks array (contacts)');
+    return { email: null, phone: null, address: null, website: null };
+  }
+
+  const contactBlock = findBlock(blocks, 'ExtendedContactInfoes');
+  if (!contactBlock) {
+    warnings.push('Missing ExtendedContactInfoes block');
+    return { email: null, phone: null, address: null, website: null };
+  }
+
+  // Common fields present in exports
+  const email = getString(contactBlock, 'email');
+  const phone = getString(contactBlock, 'phone');
+
+  // Best-effort fields (not present in current fixtures but may exist in other exports)
+  const address =
+    getString(contactBlock, 'formattedAddress') ??
+    getString(contactBlock, 'address') ??
+    getString(contactBlock, 'city');
+
+  const website =
+    getString(contactBlock, 'webSiteUrl') ??
+    getString(contactBlock, 'website') ??
+    getString(contactBlock, 'url');
+
+  return {
+    email,
+    phone,
+    address,
+    website,
+  };
 }
 
 /**
@@ -671,6 +713,16 @@ export function extractCv(rawSv: unknown, rawEn: unknown): ExtractionResult {
   const summarySv = extractSummary(rawSv, warnings);
   const summaryEn = extractSummary(rawEn, warnings);
 
+  // Contacts (prefer Swedish values, fallback to English)
+  const contactsSv = extractContacts(rawSv, warnings);
+  const contactsEn = extractContacts(rawEn, warnings);
+  const contacts: Contacts = {
+    email: contactsSv.email ?? contactsEn.email ?? null,
+    phone: contactsSv.phone ?? contactsEn.phone ?? null,
+    address: contactsSv.address ?? contactsEn.address ?? null,
+    website: contactsSv.website ?? contactsEn.website ?? null,
+  };
+
   // Skills (merge from both, deduplicate)
   const skillsSv = extractSkills(rawSv, warnings);
   const skillsEn = extractSkills(rawEn, warnings);
@@ -715,6 +767,7 @@ export function extractCv(rawSv: unknown, rawEn: unknown): ExtractionResult {
       sv: summarySv,
       en: summaryEn,
     },
+    contacts,
     skills,
     roles,
     trainings,

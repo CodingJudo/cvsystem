@@ -15,6 +15,13 @@ export interface BilingualText {
   en: string | null;
 }
 
+export interface Contacts {
+  email: string | null;
+  phone: string | null;
+  address: string | null;
+  website: string | null;
+}
+
 /**
  * A skill entry from the CV
  */
@@ -173,6 +180,7 @@ export interface DomainCV {
   title: BilingualText;
   /** Summary/about text */
   summary: BilingualText;
+  contacts?: Contacts | null;
   /** Optional profile photo (data URL) */
   photoDataUrl?: string | null;
   /** All skills extracted from the CV */

@@ -26,6 +26,11 @@ export function mergeWithResolutions(
   analysis: ConflictAnalysis,
   resolutions: ConflictResolutions
 ): DomainCV {
+  const hasAnyContacts = (cv: DomainCV): boolean => {
+    const c = cv.contacts;
+    return Boolean(c?.email || c?.phone || c?.address || c?.website);
+  };
+
   // Start with a copy of current
   const merged: DomainCV = {
     ...current,
@@ -35,6 +40,14 @@ export function mergeWithResolutions(
     skills: [...current.skills],
     roles: [...current.roles],
   };
+
+  // Non-conflict fields: prefer incoming when current is empty.
+  if (!hasAnyContacts(current) && hasAnyContacts(incoming)) {
+    merged.contacts = incoming.contacts ? { ...incoming.contacts } : incoming.contacts;
+  }
+  if (!current.photoDataUrl && incoming.photoDataUrl) {
+    merged.photoDataUrl = incoming.photoDataUrl;
+  }
   
   // Apply title resolution
   if (analysis.conflicts.title && resolutions.title) {

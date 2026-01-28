@@ -15,6 +15,7 @@ import { EducationEditor } from './education-editor';
 import { CommitmentsEditor } from './commitment-editor';
 import { SummaryEditor } from './summary-editor';
 import { PhotoSelector } from './photo-selector';
+import { ContactsEditor } from './contacts-editor';
 import { ImportDialog } from '@/components/import';
 import { downloadCvAsJson, type ImportResult } from '@/lib/file-formats';
 
@@ -204,6 +205,20 @@ function CVContent({ warnings, initialCv }: { warnings: string[]; initialCv: Dom
                 ))}
               </ul>
             </CardContent>
+          </Card>
+        )}
+
+        {/* Contacts */}
+        {isInitialized ? (
+          <ContactsEditor locale={locale} />
+        ) : (
+          <Card className="border-none shadow-lg bg-white">
+            <CardHeader>
+              <CardTitle className="text-[var(--geisli-secondary)]">
+                {locale === 'sv' ? 'Kontakt' : 'Contact'}
+              </CardTitle>
+              <CardDescription>{locale === 'sv' ? 'Laddar...' : 'Loading...'}</CardDescription>
+            </CardHeader>
           </Card>
         )}
 
