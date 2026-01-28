@@ -23,6 +23,22 @@ export interface Contacts {
 }
 
 /**
+ * A featured/highlighted project for a future cover page.
+ * Typically references an existing role but has its own curated description.
+ */
+export interface FeaturedProject {
+  id: string;
+  /** Optional reference to an existing role/work experience */
+  roleId: string | null;
+  /** Display fields (usually copied from the referenced role) */
+  company: string | null;
+  roleTitle: string | null;
+  description: BilingualText;
+  /** Whether to include in exports/cover page */
+  visible: boolean;
+}
+
+/**
  * A skill entry from the CV
  */
 export interface Skill {
@@ -183,6 +199,8 @@ export interface DomainCV {
   contacts?: Contacts | null;
   /** Optional profile photo (data URL) */
   photoDataUrl?: string | null;
+  /** Featured projects ("Utvalda projekt") */
+  featuredProjects?: FeaturedProject[];
   /** All skills extracted from the CV */
   skills: Skill[];
   /** Work experiences / assignments / roles */

@@ -8,7 +8,7 @@ import {
   type ReactNode,
   type Dispatch,
 } from 'react';
-import type { DomainCV, Skill, Role, RoleSkill, Training, Education, Commitment, Contacts } from '@/domain/model/cv';
+import type { DomainCV, Skill, Role, RoleSkill, Training, Education, Commitment, Contacts, FeaturedProject } from '@/domain/model/cv';
 import type { GeisliCVMetadata, RawCinodeData } from '@/lib/file-formats/types';
 
 // Storage key for localStorage
@@ -26,6 +26,7 @@ function normalizeCv(cv: DomainCV): DomainCV {
     commitments: cv.commitments ?? [],
     photoDataUrl: cv.photoDataUrl ?? null,
     contacts: cv.contacts ?? { email: null, phone: null, address: null, website: null },
+    featuredProjects: cv.featuredProjects ?? [],
   };
 }
 
@@ -35,6 +36,9 @@ type CVAction =
   | { type: 'UPDATE_SUMMARY'; summary: DomainCV['summary'] }
   | { type: 'UPDATE_CONTACTS'; contacts: Contacts }
   | { type: 'UPDATE_PHOTO'; photoDataUrl: string | null }
+  | { type: 'ADD_FEATURED_PROJECT'; project: FeaturedProject }
+  | { type: 'UPDATE_FEATURED_PROJECT'; projectId: string; updates: Partial<Omit<FeaturedProject, 'id'>> }
+  | { type: 'DELETE_FEATURED_PROJECT'; projectId: string }
   | { type: 'UPDATE_SKILL'; skill: Skill }
   | { type: 'ADD_SKILL'; skill: Skill }
   | { type: 'DELETE_SKILL'; skillId: string }
@@ -149,6 +153,39 @@ function cvReducer(state: CVState, action: CVAction): CVState {
       return {
         ...state,
         cv: { ...state.cv, photoDataUrl: action.photoDataUrl },
+        hasChanges: true,
+      };
+    }
+
+    case 'ADD_FEATURED_PROJECT': {
+      if (!state.cv) return state;
+      return {
+        ...state,
+        cv: {
+          ...state.cv,
+          featuredProjects: [action.project, ...(state.cv.featuredProjects ?? [])],
+        },
+        hasChanges: true,
+      };
+    }
+
+    case 'UPDATE_FEATURED_PROJECT': {
+      if (!state.cv) return state;
+      const current = state.cv.featuredProjects ?? [];
+      const updated = current.map((p) => (p.id === action.projectId ? { ...p, ...action.updates } : p));
+      return {
+        ...state,
+        cv: { ...state.cv, featuredProjects: updated },
+        hasChanges: true,
+      };
+    }
+
+    case 'DELETE_FEATURED_PROJECT': {
+      if (!state.cv) return state;
+      const current = state.cv.featuredProjects ?? [];
+      return {
+        ...state,
+        cv: { ...state.cv, featuredProjects: current.filter((p) => p.id !== action.projectId) },
         hasChanges: true,
       };
     }
@@ -749,6 +786,23 @@ export function useCVActions() {
 
     updatePhoto: (photoDataUrl: string | null) => {
       dispatch({ type: 'UPDATE_PHOTO', photoDataUrl });
+    },
+
+    addFeaturedProject: (project: Omit<FeaturedProject, 'id'>) => {
+      const newProject: FeaturedProject = {
+        ...project,
+        id: `featured-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      };
+      dispatch({ type: 'ADD_FEATURED_PROJECT', project: newProject });
+      return newProject;
+    },
+
+    updateFeaturedProject: (projectId: string, updates: Partial<Omit<FeaturedProject, 'id'>>) => {
+      dispatch({ type: 'UPDATE_FEATURED_PROJECT', projectId, updates });
+    },
+
+    deleteFeaturedProject: (projectId: string) => {
+      dispatch({ type: 'DELETE_FEATURED_PROJECT', projectId });
     },
     
     resetToOriginal: () => {

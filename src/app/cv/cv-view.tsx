@@ -16,6 +16,7 @@ import { CommitmentsEditor } from './commitment-editor';
 import { SummaryEditor } from './summary-editor';
 import { PhotoSelector } from './photo-selector';
 import { ContactsEditor } from './contacts-editor';
+import { FeaturedProjectsEditor } from './featured-projects-editor';
 import { ImportDialog } from '@/components/import';
 import { downloadCvAsJson, type ImportResult } from '@/lib/file-formats';
 
@@ -216,6 +217,20 @@ function CVContent({ warnings, initialCv }: { warnings: string[]; initialCv: Dom
             <CardHeader>
               <CardTitle className="text-[var(--geisli-secondary)]">
                 {locale === 'sv' ? 'Kontakt' : 'Contact'}
+              </CardTitle>
+              <CardDescription>{locale === 'sv' ? 'Laddar...' : 'Loading...'}</CardDescription>
+            </CardHeader>
+          </Card>
+        )}
+
+        {/* Featured Projects */}
+        {isInitialized ? (
+          <FeaturedProjectsEditor locale={locale} />
+        ) : (
+          <Card className="border-none shadow-lg bg-white">
+            <CardHeader>
+              <CardTitle className="text-[var(--geisli-secondary)]">
+                {locale === 'sv' ? 'Utvalda projekt' : 'Featured projects'}
               </CardTitle>
               <CardDescription>{locale === 'sv' ? 'Laddar...' : 'Loading...'}</CardDescription>
             </CardHeader>

@@ -18,6 +18,7 @@ import type {
   Commitment,
   CommitmentType,
   Contacts,
+  FeaturedProject,
 } from '../model/cv';
 
 /**
@@ -201,6 +202,104 @@ function extractContacts(raw: unknown, warnings: string[]): Contacts {
     address,
     website,
   };
+}
+
+function normalizeForCompare(value: string | null | undefined): string {
+  return (value ?? '').trim().toLowerCase();
+}
+
+function matchRoleIdForHighlight(highlight: { title: string | null; employer: string | null; start?: string | null; end?: string | null }, roles: Role[]): string | null {
+  const ht = normalizeForCompare(highlight.title);
+  const hc = normalizeForCompare(highlight.employer);
+  if (!ht && !hc) return null;
+
+  const start = highlight.start ?? null;
+  const end = highlight.end ?? null;
+
+  const exact = roles.find((r) => {
+    const rt = normalizeForCompare(r.title);
+    const rc = normalizeForCompare(r.company);
+    if (rt && ht && rt !== ht) return false;
+    if (rc && hc && rc !== hc) return false;
+    // If both provided, require both
+    if (ht && rt !== ht) return false;
+    if (hc && rc !== hc) return false;
+    if (start && r.start && r.start !== start) return false;
+    if (end && r.end && r.end !== end) return false;
+    return true;
+  });
+  if (exact) return exact.id;
+
+  // Looser match: company+title only
+  const loose = roles.find((r) => normalizeForCompare(r.title) === ht && normalizeForCompare(r.company) === hc);
+  return loose?.id ?? null;
+}
+
+/**
+ * Extract featured projects ("Utvalda projekt") from HighlightedWorkExperiences.
+ * These are intended to be shown on a cover page and usually overlap with roles.
+ */
+function extractFeaturedProjects(
+  rawSv: unknown,
+  rawEn: unknown,
+  roles: Role[],
+  warnings: string[]
+): FeaturedProject[] {
+  const blocksSv = getArray(rawSv, 'resume.blocks');
+  const blocksEn = getArray(rawEn, 'resume.blocks');
+
+  const blockSv = blocksSv ? findBlock(blocksSv, 'HighlightedWorkExperiences') : null;
+  const blockEn = blocksEn ? findBlock(blocksEn, 'HighlightedWorkExperiences') : null;
+
+  const dataSv = blockSv ? getArray(blockSv, 'data') : null;
+  const dataEn = blockEn ? getArray(blockEn, 'data') : null;
+
+  if ((!dataSv || dataSv.length === 0) && (!dataEn || dataEn.length === 0)) {
+    return [];
+  }
+
+  const primaryData = (dataSv && dataSv.length > 0) ? dataSv : (dataEn ?? []);
+  const secondaryData = (primaryData === dataSv) ? (dataEn ?? []) : (dataSv ?? []);
+
+  const result: FeaturedProject[] = [];
+
+  for (let i = 0; i < primaryData.length; i++) {
+    const itemSv = primaryData[i];
+    const itemEn = secondaryData[i];
+    if (!isObject(itemSv)) continue;
+
+    const id = getString(itemSv, 'id') ?? getString(itemSv, 'blockItemId') ?? `featured-${i}`;
+    const title = getString(itemSv, 'title');
+    const employer = getString(itemSv, 'employer');
+    const startDate = getString(itemSv, 'startDate');
+    const endDate = getString(itemSv, 'endDate');
+
+    const descriptionSv = getString(itemSv, 'description');
+    const descriptionEn = isObject(itemEn) ? getString(itemEn, 'description') : null;
+
+    const roleId = matchRoleIdForHighlight({ title, employer, start: startDate, end: endDate }, roles);
+
+    const disabled = getBoolean(itemSv, 'disabled');
+    const visible = disabled === null ? true : !disabled;
+
+    // Prefer role fields if we found a match (keeps it consistent with the “real” role)
+    const matchedRole = roleId ? roles.find((r) => r.id === roleId) : undefined;
+
+    result.push({
+      id,
+      roleId,
+      company: matchedRole?.company ?? employer ?? null,
+      roleTitle: matchedRole?.title ?? title ?? null,
+      description: { sv: descriptionSv ?? null, en: descriptionEn ?? null },
+      visible,
+    });
+  }
+
+  if (result.length === 0) {
+    warnings.push('HighlightedWorkExperiences block found but no items extracted');
+  }
+
+  return result;
 }
 
 /**
@@ -751,6 +850,9 @@ export function extractCv(rawSv: unknown, rawEn: unknown): ExtractionResult {
   // Commitments (presentations, publications, etc.)
   const commitments = extractCommitments(rawSv, rawEn, warnings);
 
+  // Featured projects ("Utvalda projekt") from HighlightedWorkExperiences
+  const featuredProjects = extractFeaturedProjects(rawSv, rawEn, roles, warnings);
+
   const cv: DomainCV = {
     id,
     locales,
@@ -768,6 +870,7 @@ export function extractCv(rawSv: unknown, rawEn: unknown): ExtractionResult {
       en: summaryEn,
     },
     contacts,
+    featuredProjects,
     skills,
     roles,
     trainings,

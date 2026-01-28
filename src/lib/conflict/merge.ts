@@ -30,6 +30,9 @@ export function mergeWithResolutions(
     const c = cv.contacts;
     return Boolean(c?.email || c?.phone || c?.address || c?.website);
   };
+  const hasAnyFeaturedProjects = (cv: DomainCV): boolean => {
+    return Boolean(cv.featuredProjects && cv.featuredProjects.length > 0);
+  };
 
   // Start with a copy of current
   const merged: DomainCV = {
@@ -47,6 +50,9 @@ export function mergeWithResolutions(
   }
   if (!current.photoDataUrl && incoming.photoDataUrl) {
     merged.photoDataUrl = incoming.photoDataUrl;
+  }
+  if (!hasAnyFeaturedProjects(current) && hasAnyFeaturedProjects(incoming)) {
+    merged.featuredProjects = incoming.featuredProjects ? incoming.featuredProjects.map((p) => ({ ...p, description: { ...p.description } })) : incoming.featuredProjects;
   }
   
   // Apply title resolution
