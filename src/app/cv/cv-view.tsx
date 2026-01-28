@@ -4,12 +4,17 @@ import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import type { DomainCV, Locale, BilingualText } from '@/domain/model/cv';
-import { CVProvider, useCVState, useCVActions } from '@/lib/store/cv-store';
+import { CVProvider, useCVState, useCVActions, useCVImportExport } from '@/lib/store/cv-store';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { SkillsEditor } from './skill-editor';
 import { RolesEditor } from './role-editor';
+import { TrainingsEditor } from './training-editor';
+import { EducationEditor } from './education-editor';
+import { CommitmentsEditor } from './commitment-editor';
+import { ImportDialog } from '@/components/import';
+import { downloadCvAsJson, type ImportResult } from '@/lib/file-formats';
 
 interface CVViewProps {
   cv: DomainCV;
@@ -37,10 +42,33 @@ function formatDate(dateStr: string | null | undefined): string {
 function CVContent({ warnings, initialCv }: { warnings: string[]; initialCv: DomainCV }) {
   const { cv, hasChanges, isInitialized } = useCVState();
   const { resetToOriginal } = useCVActions();
+  const { importCv, metadata, rawCinode, hasData } = useCVImportExport();
   const [locale, setLocale] = useState<Locale>(initialCv.locales[0] ?? 'sv');
+  const [showImportDialog, setShowImportDialog] = useState(false);
 
-  // Use initial CV until state is loaded
-  const displayCv = cv ?? initialCv;
+  // Use initial CV until state is loaded, with defaults for new fields
+  const rawCv = cv ?? initialCv;
+  const displayCv = {
+    ...rawCv,
+    trainings: rawCv.trainings ?? [],
+    educations: rawCv.educations ?? [],
+    commitments: rawCv.commitments ?? [],
+  };
+
+  const handleImportComplete = (result: ImportResult) => {
+    if (result.success && result.cv) {
+      importCv(result.cv, result.metadata, result.rawCinode);
+    }
+    setShowImportDialog(false);
+  };
+
+  const handleSave = () => {
+    if (!cv) return;
+    downloadCvAsJson(cv, {
+      metadata: metadata ? { ...metadata, savedAt: new Date().toISOString() } : undefined,
+      rawCinode: rawCinode,
+    });
+  };
 
   const summary = getBilingualText(displayCv.summary, locale);
   const title = getBilingualText(displayCv.title, locale);
@@ -74,8 +102,27 @@ function CVContent({ warnings, initialCv }: { warnings: string[]; initialCv: Dom
               </TabsList>
             </Tabs>
 
+            {/* Import/Save Actions */}
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => setShowImportDialog(true)}
+              className="border-[var(--geisli-secondary)] bg-white text-[var(--geisli-secondary)] hover:bg-gray-100"
+            >
+              {locale === 'sv' ? 'Importera' : 'Import'}
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={handleSave}
+              disabled={!cv}
+              className="border-[var(--geisli-secondary)] bg-white text-[var(--geisli-secondary)] hover:bg-gray-100"
+            >
+              💾 {locale === 'sv' ? 'Spara' : 'Save'}
+            </Button>
+
             {/* Export Actions */}
-            <Button variant="outline" size="sm" asChild className="border-white/30 text-white hover:bg-white/10">
+            <Button variant="outline" size="sm" asChild className="border-[var(--geisli-secondary)] bg-white text-[var(--geisli-secondary)] hover:bg-gray-100">
               <Link href="/cv/canvas">
                 {locale === 'sv' ? 'Bild' : 'Image'}
               </Link>
@@ -192,14 +239,34 @@ function CVContent({ warnings, initialCv }: { warnings: string[]; initialCv: Dom
           </Card>
         )}
 
+        {/* Education Editor */}
+        {isInitialized && <EducationEditor locale={locale} />}
+
+        {/* Trainings Editor (Courses & Certifications) */}
+        {isInitialized && <TrainingsEditor locale={locale} />}
+
+        {/* Commitments Editor (Presentations & Publications) */}
+        {isInitialized && <CommitmentsEditor locale={locale} />}
+
         {/* Stats Footer */}
-        <div className="flex justify-center gap-8 text-sm text-gray-500 py-4">
+        <div className="flex flex-wrap justify-center gap-4 md:gap-8 text-sm text-gray-500 py-4">
           <span>ID: {displayCv.id}</span>
-          <span>{locale === 'sv' ? 'Språk' : 'Locales'}: {displayCv.locales.join(', ')}</span>
+          <span>{locale === 'sv' ? 'Roller' : 'Roles'}: {displayCv.roles.length}</span>
           <span>{locale === 'sv' ? 'Kompetenser' : 'Skills'}: {displayCv.skills.length}</span>
-          <span>{locale === 'sv' ? 'Uppdrag' : 'Roles'}: {displayCv.roles.length}</span>
+          <span>{locale === 'sv' ? 'Utbildningar' : 'Education'}: {displayCv.educations.length}</span>
+          <span>{locale === 'sv' ? 'Kurser' : 'Trainings'}: {displayCv.trainings.length}</span>
         </div>
       </div>
+
+      {/* Import Dialog */}
+      <ImportDialog
+        isOpen={showImportDialog}
+        onClose={() => setShowImportDialog(false)}
+        onImportComplete={handleImportComplete}
+        hasExistingData={hasData}
+        currentCv={cv}
+        locale={locale}
+      />
     </div>
   );
 }

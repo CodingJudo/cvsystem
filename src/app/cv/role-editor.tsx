@@ -304,6 +304,163 @@ function RoleEditorCard({ role, locale, isEditing, onToggleEdit }: RoleEditorCar
   );
 }
 
+// Add Role Form
+interface AddRoleFormProps {
+  locale: Locale;
+  onCancel: () => void;
+  onAdded: () => void;
+}
+
+function AddRoleForm({ locale, onCancel, onAdded }: AddRoleFormProps) {
+  const { addRole } = useRoles();
+  const [title, setTitle] = useState('');
+  const [company, setCompany] = useState('');
+  const [location, setLocation] = useState('');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [isCurrent, setIsCurrent] = useState(false);
+  const [descriptionSv, setDescriptionSv] = useState('');
+  const [descriptionEn, setDescriptionEn] = useState('');
+
+  const t = {
+    title: locale === 'sv' ? 'Titel' : 'Title',
+    company: locale === 'sv' ? 'Företag' : 'Company',
+    location: locale === 'sv' ? 'Plats' : 'Location',
+    startDate: locale === 'sv' ? 'Startdatum' : 'Start date',
+    endDate: locale === 'sv' ? 'Slutdatum' : 'End date',
+    currentRole: locale === 'sv' ? 'Pågående anställning' : 'Currently working here',
+    descriptionSv: locale === 'sv' ? 'Beskrivning (svenska)' : 'Description (Swedish)',
+    descriptionEn: locale === 'sv' ? 'Beskrivning (engelska)' : 'Description (English)',
+    cancel: locale === 'sv' ? 'Avbryt' : 'Cancel',
+    add: locale === 'sv' ? 'Lägg till' : 'Add',
+    titlePlaceholder: locale === 'sv' ? 'T.ex. Senior utvecklare' : 'e.g. Senior Developer',
+    companyPlaceholder: locale === 'sv' ? 'T.ex. Företag AB' : 'e.g. Company Inc',
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!title.trim()) return;
+
+    addRole({
+      title: title.trim(),
+      company: company.trim() || null,
+      location: location.trim() || null,
+      start: startDate || null,
+      end: isCurrent ? null : (endDate || null),
+      isCurrent,
+      description: {
+        sv: descriptionSv.trim() || null,
+        en: descriptionEn.trim() || null,
+      },
+      skills: [],
+      visible: true,
+    });
+
+    onAdded();
+  };
+
+  return (
+    <Card className="border-[var(--geisli-primary)] border-2">
+      <CardContent className="pt-4">
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-sm font-medium text-gray-700">{t.title} *</label>
+              <Input
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder={t.titlePlaceholder}
+                required
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-gray-700">{t.company}</label>
+              <Input
+                value={company}
+                onChange={(e) => setCompany(e.target.value)}
+                placeholder={t.companyPlaceholder}
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="text-sm font-medium text-gray-700">{t.location}</label>
+            <Input
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
+              placeholder="Stockholm, Sweden"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-sm font-medium text-gray-700">{t.startDate}</label>
+              <Input
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-gray-700">{t.endDate}</label>
+              <Input
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                disabled={isCurrent}
+              />
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="isCurrent"
+              checked={isCurrent}
+              onChange={(e) => setIsCurrent(e.target.checked)}
+              className="h-4 w-4 text-[var(--geisli-primary)]"
+            />
+            <label htmlFor="isCurrent" className="text-sm text-gray-700">
+              {t.currentRole}
+            </label>
+          </div>
+
+          <div>
+            <label className="text-sm font-medium text-gray-700">{t.descriptionSv}</label>
+            <Textarea
+              value={descriptionSv}
+              onChange={(e) => setDescriptionSv(e.target.value)}
+              rows={3}
+            />
+          </div>
+
+          <div>
+            <label className="text-sm font-medium text-gray-700">{t.descriptionEn}</label>
+            <Textarea
+              value={descriptionEn}
+              onChange={(e) => setDescriptionEn(e.target.value)}
+              rows={3}
+            />
+          </div>
+
+          <div className="flex gap-3 justify-end">
+            <Button type="button" variant="outline" onClick={onCancel}>
+              {t.cancel}
+            </Button>
+            <Button 
+              type="submit"
+              disabled={!title.trim()}
+              className="bg-[var(--geisli-primary)] hover:bg-[var(--geisli-primary)]/90"
+            >
+              {t.add}
+            </Button>
+          </div>
+        </form>
+      </CardContent>
+    </Card>
+  );
+}
+
 // Main roles editor
 interface RolesEditorProps {
   locale: Locale;
@@ -312,30 +469,56 @@ interface RolesEditorProps {
 export function RolesEditor({ locale }: RolesEditorProps) {
   const { roles } = useRoles();
   const [editingRoleId, setEditingRoleId] = useState<string | null>(null);
+  const [showAddForm, setShowAddForm] = useState(false);
 
   const visibleCount = roles.filter((r) => r.visible).length;
   const hiddenCount = roles.length - visibleCount;
+
+  const t = {
+    title: locale === 'sv' ? 'Arbetslivserfarenhet' : 'Work Experience',
+    addRole: locale === 'sv' ? '+ Lägg till roll' : '+ Add Role',
+    visible: locale === 'sv' ? 'synliga' : 'visible',
+    hidden: locale === 'sv' ? 'dolda' : 'hidden',
+    noExperience: locale === 'sv' ? 'Ingen arbetslivserfarenhet hittad.' : 'No work experience found.',
+  };
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold text-[var(--geisli-secondary)]">
-          {locale === 'sv' ? 'Arbetslivserfarenhet' : 'Work Experience'}
+          {t.title}
         </h3>
-        <span className="text-sm text-gray-500">
-          {visibleCount} {locale === 'sv' ? 'synliga' : 'visible'}
-          {hiddenCount > 0 && (
-            <span className="text-[var(--geisli-accent)]">
-              {`, ${hiddenCount} ${locale === 'sv' ? 'dolda' : 'hidden'}`}
-            </span>
+        <div className="flex items-center gap-4">
+          <span className="text-sm text-gray-500">
+            {visibleCount} {t.visible}
+            {hiddenCount > 0 && (
+              <span className="text-[var(--geisli-accent)]">
+                {`, ${hiddenCount} ${t.hidden}`}
+              </span>
+            )}
+          </span>
+          {!showAddForm && (
+            <Button
+              size="sm"
+              onClick={() => setShowAddForm(true)}
+              className="bg-[var(--geisli-primary)] hover:bg-[var(--geisli-primary)]/90"
+            >
+              {t.addRole}
+            </Button>
           )}
-        </span>
+        </div>
       </div>
 
-      {roles.length === 0 ? (
-        <p className="text-gray-400 italic">
-          {locale === 'sv' ? 'Ingen arbetslivserfarenhet hittad.' : 'No work experience found.'}
-        </p>
+      {showAddForm && (
+        <AddRoleForm
+          locale={locale}
+          onCancel={() => setShowAddForm(false)}
+          onAdded={() => setShowAddForm(false)}
+        />
+      )}
+
+      {roles.length === 0 && !showAddForm ? (
+        <p className="text-gray-400 italic">{t.noExperience}</p>
       ) : (
         <div className="space-y-4">
           {roles.map((role) => (

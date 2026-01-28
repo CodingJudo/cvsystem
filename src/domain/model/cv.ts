@@ -82,6 +82,76 @@ export interface Role {
 }
 
 /**
+ * Training type enum
+ * 0 = Course, 1 = Certification, 2 = Other
+ */
+export type TrainingType = 0 | 1 | 2;
+
+/**
+ * A training, course, or certification entry
+ */
+export interface Training {
+  id: string;
+  title: string;
+  description: BilingualText;
+  /** Organization that issued/provided the training */
+  issuer: string | null;
+  /** Year completed */
+  year: number | null;
+  /** Expiration date (for certifications) */
+  expireDate: string | null;
+  /** URL to certificate or course info */
+  url: string | null;
+  /** 0 = Course, 1 = Certification, 2 = Other */
+  trainingType: TrainingType;
+  /** Whether to include in exports */
+  visible: boolean;
+}
+
+/**
+ * A formal education entry
+ */
+export interface Education {
+  id: string;
+  /** School/University name */
+  schoolName: string;
+  /** Program/Degree name */
+  programName: string | null;
+  /** Degree type (M.Sc., B.Sc., PhD, etc.) */
+  degree: string | null;
+  description: BilingualText;
+  location: string | null;
+  startDate: string | null;
+  endDate: string | null;
+  ongoing: boolean;
+  url: string | null;
+  /** Whether to include in exports */
+  visible: boolean;
+}
+
+/**
+ * Commitment type for presentations, publications, etc.
+ */
+export type CommitmentType = 'presentation' | 'publication' | 'open-source' | 'volunteer' | 'other';
+
+/**
+ * A commitment entry (presentations, publications, volunteer work, etc.)
+ */
+export interface Commitment {
+  id: string;
+  title: string;
+  description: BilingualText;
+  /** Type of commitment */
+  commitmentType: CommitmentType;
+  /** Event/venue name (for presentations) or publisher (for publications) */
+  venue: string | null;
+  date: string | null;
+  url: string | null;
+  /** Whether to include in exports */
+  visible: boolean;
+}
+
+/**
  * The main Domain CV model
  *
  * This is the normalized representation of a CV that can be used
@@ -107,4 +177,10 @@ export interface DomainCV {
   skills: Skill[];
   /** Work experiences / assignments / roles */
   roles: Role[];
+  /** Courses and certifications */
+  trainings: Training[];
+  /** Formal education */
+  educations: Education[];
+  /** Presentations, publications, and other commitments */
+  commitments: Commitment[];
 }

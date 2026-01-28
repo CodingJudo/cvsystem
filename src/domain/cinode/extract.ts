@@ -5,7 +5,19 @@
  * See paths.md for documentation of which JSON paths are mapped.
  */
 
-import type { DomainCV, Skill, Role, RoleSkill, Locale, BilingualText } from '../model/cv';
+import type { 
+  DomainCV, 
+  Skill, 
+  Role, 
+  RoleSkill, 
+  Locale, 
+  BilingualText,
+  Training,
+  TrainingType,
+  Education,
+  Commitment,
+  CommitmentType,
+} from '../model/cv';
 
 /**
  * Result of extracting a DomainCV from Cinode JSON
@@ -408,6 +420,213 @@ function extractRoles(
 }
 
 /**
+ * Extract trainings (courses and certifications) from the Trainings block
+ */
+function extractTrainings(
+  rawSv: unknown,
+  rawEn: unknown,
+  warnings: string[]
+): Training[] {
+  const blocksSv = getArray(rawSv, 'resume.blocks');
+  const blocksEn = getArray(rawEn, 'resume.blocks');
+
+  const trainingsBlockSv = blocksSv ? findBlock(blocksSv, 'Trainings') : null;
+  const trainingsBlockEn = blocksEn ? findBlock(blocksEn, 'Trainings') : null;
+
+  const dataSv = trainingsBlockSv ? getArray(trainingsBlockSv, 'data') : null;
+  const dataEn = trainingsBlockEn ? getArray(trainingsBlockEn, 'data') : null;
+
+  if (!dataSv && !dataEn) {
+    return [];
+  }
+
+  const primaryData = dataSv ?? dataEn ?? [];
+  const secondaryData = dataEn ?? dataSv ?? [];
+  const trainings: Training[] = [];
+
+  for (let i = 0; i < primaryData.length; i++) {
+    const itemSv = primaryData[i];
+    const itemEn = secondaryData[i];
+
+    if (!isObject(itemSv)) continue;
+
+    const id = getString(itemSv, 'id') ?? getString(itemSv, 'blockItemId') ?? `training-${i}`;
+    const title = getString(itemSv, 'title') ?? '';
+    const issuer = getString(itemSv, 'issuer');
+    const year = getNumber(itemSv, 'year');
+    const expireDate = getString(itemSv, 'expireDate');
+    const url = getString(itemSv, 'url');
+    const trainingTypeRaw = getNumber(itemSv, 'trainingType');
+    const trainingType = (trainingTypeRaw === 0 || trainingTypeRaw === 1 || trainingTypeRaw === 2) 
+      ? trainingTypeRaw as TrainingType 
+      : 0;
+    const disabled = getBoolean(itemSv, 'disabled');
+    const visible = disabled === null ? true : !disabled;
+
+    const descriptionSv = getString(itemSv, 'description');
+    const descriptionEn = isObject(itemEn) ? getString(itemEn, 'description') : null;
+
+    trainings.push({
+      id,
+      title,
+      description: { sv: descriptionSv, en: descriptionEn },
+      issuer,
+      year,
+      expireDate,
+      url,
+      trainingType,
+      visible,
+    });
+  }
+
+  return trainings;
+}
+
+/**
+ * Extract education entries from the Educations block
+ */
+function extractEducations(
+  rawSv: unknown,
+  rawEn: unknown,
+  warnings: string[]
+): Education[] {
+  const blocksSv = getArray(rawSv, 'resume.blocks');
+  const blocksEn = getArray(rawEn, 'resume.blocks');
+
+  const educationsBlockSv = blocksSv ? findBlock(blocksSv, 'Educations') : null;
+  const educationsBlockEn = blocksEn ? findBlock(blocksEn, 'Educations') : null;
+
+  const dataSv = educationsBlockSv ? getArray(educationsBlockSv, 'data') : null;
+  const dataEn = educationsBlockEn ? getArray(educationsBlockEn, 'data') : null;
+
+  if (!dataSv && !dataEn) {
+    return [];
+  }
+
+  const primaryData = dataSv ?? dataEn ?? [];
+  const secondaryData = dataEn ?? dataSv ?? [];
+  const educations: Education[] = [];
+
+  for (let i = 0; i < primaryData.length; i++) {
+    const itemSv = primaryData[i];
+    const itemEn = secondaryData[i];
+
+    if (!isObject(itemSv)) continue;
+
+    const id = getString(itemSv, 'id') ?? getString(itemSv, 'blockItemId') ?? `education-${i}`;
+    const schoolName = getString(itemSv, 'schoolName') ?? '';
+    const programName = getString(itemSv, 'programName');
+    const degree = getString(itemSv, 'degree');
+    const location = getString(itemSv, 'location');
+    const startDate = getString(itemSv, 'startDate');
+    const endDate = getString(itemSv, 'endDate');
+    const ongoing = getBoolean(itemSv, 'ongoing') ?? false;
+    const url = getString(itemSv, 'url');
+    const disabled = getBoolean(itemSv, 'disabled');
+    const visible = disabled === null ? true : !disabled;
+
+    const descriptionSv = getString(itemSv, 'description');
+    const descriptionEn = isObject(itemEn) ? getString(itemEn, 'description') : null;
+
+    educations.push({
+      id,
+      schoolName,
+      programName,
+      degree,
+      description: { sv: descriptionSv, en: descriptionEn },
+      location,
+      startDate,
+      endDate,
+      ongoing,
+      url,
+      visible,
+    });
+  }
+
+  return educations;
+}
+
+/**
+ * Map Cinode commitment type to our CommitmentType
+ */
+function mapCommitmentType(cinodeType: string | null): CommitmentType {
+  if (!cinodeType) return 'other';
+  const lower = cinodeType.toLowerCase();
+  if (lower.includes('presentation') || lower.includes('talk') || lower.includes('speaker')) {
+    return 'presentation';
+  }
+  if (lower.includes('publication') || lower.includes('article') || lower.includes('book')) {
+    return 'publication';
+  }
+  if (lower.includes('open') || lower.includes('source') || lower.includes('github')) {
+    return 'open-source';
+  }
+  if (lower.includes('volunteer') || lower.includes('charity')) {
+    return 'volunteer';
+  }
+  return 'other';
+}
+
+/**
+ * Extract commitments (presentations, publications, etc.) from the Commitments block
+ */
+function extractCommitments(
+  rawSv: unknown,
+  rawEn: unknown,
+  warnings: string[]
+): Commitment[] {
+  const blocksSv = getArray(rawSv, 'resume.blocks');
+  const blocksEn = getArray(rawEn, 'resume.blocks');
+
+  const commitmentsBlockSv = blocksSv ? findBlock(blocksSv, 'Commitments') : null;
+  const commitmentsBlockEn = blocksEn ? findBlock(blocksEn, 'Commitments') : null;
+
+  const dataSv = commitmentsBlockSv ? getArray(commitmentsBlockSv, 'data') : null;
+  const dataEn = commitmentsBlockEn ? getArray(commitmentsBlockEn, 'data') : null;
+
+  if (!dataSv && !dataEn) {
+    return [];
+  }
+
+  const primaryData = dataSv ?? dataEn ?? [];
+  const secondaryData = dataEn ?? dataSv ?? [];
+  const commitments: Commitment[] = [];
+
+  for (let i = 0; i < primaryData.length; i++) {
+    const itemSv = primaryData[i];
+    const itemEn = secondaryData[i];
+
+    if (!isObject(itemSv)) continue;
+
+    const id = getString(itemSv, 'id') ?? getString(itemSv, 'blockItemId') ?? `commitment-${i}`;
+    const title = getString(itemSv, 'title') ?? '';
+    const venue = getString(itemSv, 'venue') ?? getString(itemSv, 'event') ?? getString(itemSv, 'publisher');
+    const date = getString(itemSv, 'date') ?? getString(itemSv, 'year');
+    const url = getString(itemSv, 'url');
+    const typeRaw = getString(itemSv, 'type') ?? getString(itemSv, 'commitmentType');
+    const commitmentType = mapCommitmentType(typeRaw);
+    const disabled = getBoolean(itemSv, 'disabled');
+    const visible = disabled === null ? true : !disabled;
+
+    const descriptionSv = getString(itemSv, 'description');
+    const descriptionEn = isObject(itemEn) ? getString(itemEn, 'description') : null;
+
+    commitments.push({
+      id,
+      title,
+      description: { sv: descriptionSv, en: descriptionEn },
+      commitmentType,
+      venue,
+      date,
+      url,
+      visible,
+    });
+  }
+
+  return commitments;
+}
+
+/**
  * Main extraction function
  *
  * Takes raw Cinode JSON exports (Swedish and English) and produces
@@ -471,6 +690,15 @@ export function extractCv(rawSv: unknown, rawEn: unknown): ExtractionResult {
   // Roles (bilingual descriptions)
   const roles = extractRoles(rawSv, rawEn, warnings);
 
+  // Trainings (courses and certifications)
+  const trainings = extractTrainings(rawSv, rawEn, warnings);
+
+  // Education
+  const educations = extractEducations(rawSv, rawEn, warnings);
+
+  // Commitments (presentations, publications, etc.)
+  const commitments = extractCommitments(rawSv, rawEn, warnings);
+
   const cv: DomainCV = {
     id,
     locales,
@@ -489,6 +717,9 @@ export function extractCv(rawSv: unknown, rawEn: unknown): ExtractionResult {
     },
     skills,
     roles,
+    trainings,
+    educations,
+    commitments,
   };
 
   return {

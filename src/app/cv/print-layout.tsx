@@ -1,6 +1,6 @@
 'use client';
 
-import type { DomainCV, Locale, BilingualText, Skill, Role } from '@/domain/model/cv';
+import type { DomainCV, Locale, BilingualText, Skill, Role, Training, Education, Commitment } from '@/domain/model/cv';
 
 interface PrintLayoutProps {
   cv: DomainCV;
@@ -65,6 +65,63 @@ function PrintRole({ role, locale }: { role: Role; locale: Locale }) {
       {description && (
         <p className="role-description">{description}</p>
       )}
+    </div>
+  );
+}
+
+function PrintEducation({ education, locale }: { education: Education; locale: Locale }) {
+  const dateRange = [
+    education.startDate ? new Date(education.startDate).getFullYear().toString() : '',
+    education.ongoing 
+      ? (locale === 'sv' ? 'Pågående' : 'Ongoing') 
+      : education.endDate ? new Date(education.endDate).getFullYear().toString() : '',
+  ].filter(Boolean).join(' – ');
+
+  const description = getBilingualText(education.description, locale);
+
+  return (
+    <div className="print-education">
+      <div className="education-header">
+        <div className="education-info">
+          <h3 className="education-program">
+            {education.degree && `${education.degree} `}
+            {education.programName || education.schoolName}
+          </h3>
+          {education.programName && (
+            <span className="education-school">{education.schoolName}</span>
+          )}
+        </div>
+        {dateRange && <span className="education-date">{dateRange}</span>}
+      </div>
+      {description && <p className="education-description">{description}</p>}
+    </div>
+  );
+}
+
+function PrintTraining({ training, locale }: { training: Training; locale: Locale }) {
+  const typeLabel = training.trainingType === 1 
+    ? (locale === 'sv' ? 'Certifiering' : 'Certification')
+    : '';
+  
+  return (
+    <div className="print-training">
+      <span className="training-title">{training.title}</span>
+      {training.issuer && <span className="training-issuer"> – {training.issuer}</span>}
+      {training.year && <span className="training-year"> ({training.year})</span>}
+      {typeLabel && <span className="training-type"> [{typeLabel}]</span>}
+    </div>
+  );
+}
+
+function PrintCommitment({ commitment, locale }: { commitment: Commitment; locale: Locale }) {
+  const typeIcon = commitment.commitmentType === 'presentation' ? '🎤 ' :
+                   commitment.commitmentType === 'publication' ? '📄 ' : '';
+  
+  return (
+    <div className="print-commitment">
+      <span className="commitment-title">{typeIcon}{commitment.title}</span>
+      {commitment.venue && <span className="commitment-venue"> – {commitment.venue}</span>}
+      {commitment.date && <span className="commitment-date"> ({commitment.date})</span>}
     </div>
   );
 }
@@ -147,6 +204,62 @@ export function PrintLayout({ cv, locale }: PrintLayoutProps) {
           <div className="roles-container">
             {cv.roles.filter(r => r.visible).map((role) => (
               <PrintRole key={role.id} role={role} locale={locale} />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Education - only show visible */}
+      {cv.educations.filter(e => e.visible).length > 0 && (
+        <section className="cv-section">
+          <h2 className="section-title">
+            {locale === 'sv' ? 'Utbildning' : 'Education'}
+          </h2>
+          <div className="education-container">
+            {cv.educations.filter(e => e.visible).map((edu) => (
+              <PrintEducation key={edu.id} education={edu} locale={locale} />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Certifications - only show visible certifications */}
+      {cv.trainings.filter(t => t.visible && t.trainingType === 1).length > 0 && (
+        <section className="cv-section">
+          <h2 className="section-title">
+            {locale === 'sv' ? 'Certifieringar' : 'Certifications'}
+          </h2>
+          <div className="training-container">
+            {cv.trainings.filter(t => t.visible && t.trainingType === 1).map((training) => (
+              <PrintTraining key={training.id} training={training} locale={locale} />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Courses - only show visible courses */}
+      {cv.trainings.filter(t => t.visible && t.trainingType === 0).length > 0 && (
+        <section className="cv-section">
+          <h2 className="section-title">
+            {locale === 'sv' ? 'Kurser' : 'Courses'}
+          </h2>
+          <div className="training-container">
+            {cv.trainings.filter(t => t.visible && t.trainingType === 0).map((training) => (
+              <PrintTraining key={training.id} training={training} locale={locale} />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Presentations & Publications - only show visible */}
+      {cv.commitments.filter(c => c.visible).length > 0 && (
+        <section className="cv-section">
+          <h2 className="section-title">
+            {locale === 'sv' ? 'Presentationer & Publikationer' : 'Presentations & Publications'}
+          </h2>
+          <div className="commitment-container">
+            {cv.commitments.filter(c => c.visible).map((commitment) => (
+              <PrintCommitment key={commitment.id} commitment={commitment} locale={locale} />
             ))}
           </div>
         </section>
@@ -309,6 +422,103 @@ export function PrintLayout({ cv, locale }: PrintLayoutProps) {
           text-align: center;
           font-size: 9pt;
           color: #888;
+        }
+
+        /* Education styles */
+        .education-container {
+          display: flex;
+          flex-direction: column;
+          gap: 12pt;
+        }
+
+        .print-education {
+          break-inside: avoid;
+        }
+
+        .education-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: baseline;
+        }
+
+        .education-info {
+          display: flex;
+          flex-direction: column;
+        }
+
+        .education-program {
+          font-size: 11pt;
+          font-weight: bold;
+          margin: 0;
+        }
+
+        .education-school {
+          font-size: 10pt;
+          color: #444;
+        }
+
+        .education-date {
+          font-size: 10pt;
+          color: #666;
+          white-space: nowrap;
+        }
+
+        .education-description {
+          margin: 4pt 0 0 0;
+          font-size: 10pt;
+          color: #555;
+        }
+
+        /* Training styles */
+        .training-container {
+          display: flex;
+          flex-direction: column;
+          gap: 6pt;
+        }
+
+        .print-training {
+          font-size: 10pt;
+        }
+
+        .training-title {
+          font-weight: 500;
+        }
+
+        .training-issuer {
+          color: #555;
+        }
+
+        .training-year {
+          color: #666;
+        }
+
+        .training-type {
+          font-size: 9pt;
+          color: #888;
+          font-style: italic;
+        }
+
+        /* Commitment styles */
+        .commitment-container {
+          display: flex;
+          flex-direction: column;
+          gap: 6pt;
+        }
+
+        .print-commitment {
+          font-size: 10pt;
+        }
+
+        .commitment-title {
+          font-weight: 500;
+        }
+
+        .commitment-venue {
+          color: #555;
+        }
+
+        .commitment-date {
+          color: #666;
         }
 
         @media print {
