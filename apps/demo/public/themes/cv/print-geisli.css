@@ -1,0 +1,817 @@
+/* Geisli reference theme – two-column layout per referencedata/cv-example-html
+   All sizes use rem. In print, html font-size is set to 11pt (globals.css @media print), so 1rem = 11pt. */
+
+.printTheme--geisli {
+  font-family: var(--font-poppins), "Poppins", sans-serif;
+  font-weight: 300;
+  font-style: normal;
+  /* Color tokens */
+  --sidebar-bg: #0f172a;
+  --sidebar-text: #f9fafb;
+  --cv-page-bg: #ffffff;
+  --cv-text: #111827;
+  --cv-muted: #4b5563;
+  --cv-muted-2: #6b7280;
+  --cv-border: #e5e7eb;
+  --cv-border-strong: #000000;
+  --cv-footer-bg: #0f172a;
+  --cv-accent: #6366f1;
+
+  /* Typography tokens */
+  --geisli-font-size-base: 1rem;
+  --geisli-font-size-body: 0.9rem;
+  --geisli-font-size-meta: 0.909rem; /* 10pt */
+  --geisli-font-size-section: 1.2rem;
+  --geisli-font-size-sub: 1.1rem;
+  --geisli-font-size-small: 0.818rem; /* 9pt */
+  --geisli-font-size-program: 1rem; /* 11pt, education program title */
+  --geisli-font-size-footer: 0.85rem;
+  --geisli-font-size-footer-inner: 0.8rem;
+  --geisli-line-height-body: 1.6;
+  --geisli-line-height-meta: 2;
+  --geisli-line-height-compact: 1.5;
+
+  /* Paragraph / body text rhythm (same line-height, consistent margin-block) */
+  --geisli-body-line-height: var(--geisli-line-height-body);
+  --geisli-paragraph-margin-block-end: var(--geisli-space-s);
+  --geisli-paragraph-gap: 0.35rem; /* body page paragraph spacing (tighter than cover) */
+  --geisli-list-margin-block: var(--geisli-space-s);
+  --geisli-list-item-margin-block: var(--geisli-space-xs);
+
+  /* Role/education/training block vertical rhythm (body pages) */
+  --geisli-role-block-gap-top: 1rem;
+  --geisli-role-block-gap-bottom: 1rem;
+
+  /* List (body content only: summary, role, education, training – not cover sidebar) */
+  --geisli-list-indent: 1.2em;
+  --geisli-list-item-gap: var(--geisli-space-xs);
+  --geisli-list-line-height: 1.5;
+  --geisli-list-marker-gap: 0.4em;
+
+  /* Vertical spacing */
+  --geisli-space-xs: 0.25rem;
+  --geisli-space-s: 0.5rem;
+  --geisli-space-m: 0.75rem;
+  --geisli-space-l: 1rem;
+  --geisli-space-xl: 1.25rem;
+  --geisli-space-2xl: 1.5rem;
+  --geisli-space-3xl: 2rem;
+  --geisli-space-gap-tight: 0.15rem;
+  --geisli-list-item-spacing: 0.35rem;
+
+  /* Horizontal padding */
+  --geisli-padding-right-col: 2rem;
+  --geisli-padding-print-cv: 2.5rem; /* main column inner (cover) */
+  --geisli-padding-sidebar-h: 2rem;
+  --geisli-padding-sidebar-v: 1.25rem;
+
+  /* Page layout (body pages): insets and footer reservation – single source of truth (1rem = 11pt) */
+  --geisli-page-pad-x: 2rem;   /* 20mm */
+  --geisli-page-pad-top: 5.154rem; /* 20mm */
+  --geisli-footer-height: 10.227rem; /* 150px */
+  --geisli-footer-overhang: 0px;     /* optional extra so footer can extend below wave; content reservation uses same calc */
+  --geisli-page-bleed: 2.835rem;   /* 11mm, used ONLY by footer wave */
+  /* Cover right column: same horizontal inset as body pages so section underlines line up */
+  --geisli-cover-pad-x: var(--geisli-page-pad-x);
+
+  /* Section title: single source for .cover-slot-title, .section-title, .body-section-title */
+  --geisli-section-title-font-size: var(--geisli-font-size-section);
+  --geisli-section-title-font-weight: 400;
+  --geisli-section-title-font-weight-sidebar: 500;
+  --geisli-section-title-letter-spacing: 0.0em;
+  --geisli-section-title-padding-bottom: var(--geisli-space-xs);
+  --geisli-section-title-margin-bottom: var(--geisli-space-m);
+  --geisli-section-title-border-width: 0.068rem; /* 1px */
+
+  /* Legacy heading aliases (cover name, section, sub) */
+  --geisli-heading-cover-name: 3rem;
+  --geisli-heading-section: var(--geisli-font-size-section);
+  --geisli-heading-sub: var(--geisli-font-size-sub);
+}
+
+/* Cover row: single 2-column grid with NAMED AREAS (not just two columns).
+   Rows: photo, contact, roles, skills, languages, extra (last row flexes).
+   Full-height left background via ::before so it extends when projects content is tall. */
+.cv-print-root .cv-cover-row:has(.cover-page.printTheme--geisli) {
+  position: relative;
+  display: grid;
+  grid-template-columns: 32% 68%;
+  grid-template-rows: auto auto auto auto auto minmax(0, 1fr);
+  grid-template-areas:
+    "photo     header"
+    "contact   summary"
+    "roles     summary"
+    "skills    projects"
+    "languages projects"
+    "extra     projects";
+  height: 76.54rem;   /* 297mm, A4 */
+  min-height: 76.54rem;
+  align-items: stretch;
+}
+
+/* Full-height left column background strip (Option B); left slots are transparent on top */
+.cv-print-root .cv-cover-row:has(.cover-page.printTheme--geisli)::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 32%;
+  background: var(--sidebar-bg);
+  z-index: 0;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+/* Flatten structure: wrappers use display:contents so slots and main sections are direct grid children of .cv-cover-row */
+.cv-print-root .cv-cover-row:has(.cover-page.printTheme--geisli) .cover-page,
+.cv-print-root .cv-cover-row:has(.cover-page.printTheme--geisli) .cv-cover-main-wrapper,
+.cv-print-root .cv-cover-row:has(.cover-page.printTheme--geisli) .cv-cover-main {
+  display: contents;
+}
+
+/* Left column: area assignments + sidebar styling; no background (::before strip shows through), z-index so content is on top */
+.cv-print-root .cv-cover-row:has(.cover-page.printTheme--geisli) .cover-slot-photo,
+.cv-print-root .cv-cover-row:has(.cover-page.printTheme--geisli) .cover-slot-contacts,
+.cv-print-root .cv-cover-row:has(.cover-page.printTheme--geisli) .cover-slot-roles,
+.cv-print-root .cv-cover-row:has(.cover-page.printTheme--geisli) .cover-slot-expertKnowledge,
+.cv-print-root .cv-cover-row:has(.cover-page.printTheme--geisli) .cover-slot-languages {
+  position: relative;
+  z-index: 1;
+  font-family: var(--font-poppins), "Poppins", sans-serif;
+  font-weight: 300;
+  font-style: normal;
+  color: var(--sidebar-text);
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+.cv-print-root .cv-cover-row:has(.cover-page.printTheme--geisli) .cover-slot-photo {
+  grid-area: photo;
+  padding: var(--geisli-space-2xl) var(--geisli-padding-sidebar-h) 0;
+}
+.cv-print-root .cv-cover-row:has(.cover-page.printTheme--geisli) .cover-slot-contacts {
+  grid-area: contact;
+  padding: var(--geisli-padding-sidebar-v) var(--geisli-padding-sidebar-h);
+}
+.cv-print-root .cv-cover-row:has(.cover-page.printTheme--geisli) .cover-slot-roles {
+  grid-area: roles;
+  padding: var(--geisli-padding-sidebar-v) var(--geisli-padding-sidebar-h);
+}
+.cv-print-root .cv-cover-row:has(.cover-page.printTheme--geisli) .cover-slot-expertKnowledge {
+  grid-area: skills;
+  padding: var(--geisli-padding-sidebar-v) var(--geisli-padding-sidebar-h);
+}
+.cv-print-root .cv-cover-row:has(.cover-page.printTheme--geisli) .cover-slot-languages {
+  grid-area: languages;
+  padding: var(--geisli-padding-sidebar-v) var(--geisli-padding-sidebar-h);
+}
+.cv-print-root .cv-cover-row:has(.cover-page.printTheme--geisli) .cover-slot-featuredProjects {
+  grid-area: extra;
+  display: none;
+}
+
+/* Right column: same horizontal inset as body pages (--geisli-cover-pad-x) */
+.cv-print-root .cv-cover-row:has(.cover-page.printTheme--geisli) .cv-header {
+  grid-area: header;
+  padding-left: var(--geisli-cover-pad-x);
+  padding-right: var(--geisli-cover-pad-x);
+  margin: auto 0 auto 0;
+}
+.cv-print-root .cv-cover-row:has(.cover-page.printTheme--geisli) .cv-section:not(.cv-section--featured-projects) {
+  grid-area: summary;
+  padding-left: var(--geisli-cover-pad-x);
+  padding-right: var(--geisli-cover-pad-x);
+}
+.cv-print-root .cv-cover-row:has(.cover-page.printTheme--geisli) .cv-section.cv-section--featured-projects {
+  grid-area: projects;
+  min-height: 0;
+  overflow: visible;
+  padding-left: var(--geisli-cover-pad-x);
+  padding-right: var(--geisli-cover-pad-x);
+  display: flex;
+  flex-direction: column;
+}
+.cv-print-root .cv-cover-row:has(.cover-page.printTheme--geisli) .cv-section.cv-section--featured-projects .featured-projects-container {
+  flex: 1;
+  min-height: 0;
+}
+
+.cv-cover-main {
+  margin-left: var(--geisli-cover-pad-x);
+  height: 100%;
+}
+
+/* Two-column layout for cover only: sidebar 30%, main 70%; body (Experience, etc.) spans full width on next row */
+.printTheme--geisli.print-output:not(.print-output--paginated) {
+  display: grid;
+  grid-template-columns: 32% 68%;
+  grid-template-rows: 76.54rem 1fr; /* 297mm A4 */
+  min-height: 0;
+}
+
+.printTheme--geisli.print-output:not(.print-output--paginated) .print-cv-body {
+  grid-column: 1 / -1;
+}
+
+/* Print: avoid grid creating 297mm gap on body pages – use block + floats. Exception: Geisli cover row keeps grid so alignment is correct. */
+@media print {
+  .printTheme--geisli.print-output {
+    display: block;
+  }
+  .cv-print-root .cv-cover-row:has(.cover-page.printTheme--geisli) {
+    display: grid !important;
+  }
+  .cv-print-root .cv-cover-row:has(.cover-page.printTheme--geisli) .cover-page,
+  .cv-print-root .cv-cover-row:has(.cover-page.printTheme--geisli) .cv-cover-main-wrapper,
+  .cv-print-root .cv-cover-row:has(.cover-page.printTheme--geisli) .cv-cover-main {
+    display: contents !important;
+    float: none !important;
+    width: auto !important;
+    height: auto !important;
+    min-height: 0 !important;
+  }
+  .printTheme--geisli.print-output .cover-page,
+  .printTheme--geisli.print-output .cv-cover-row .cover-page {
+    width: 32%;
+    float: left;
+    height: 76.54rem;
+    min-height: 76.54rem;
+  }
+  .printTheme--geisli.print-output .cv-cover-main-wrapper,
+  .printTheme--geisli.print-output .cv-cover-row .cv-cover-main-wrapper {
+    width: 68%;
+    float: left;
+    height: 76.54rem;
+    min-height: 76.54rem;
+  }
+  .printTheme--geisli.print-output .print-cv-body {
+    clear: both;
+    width: 100%;
+    margin-top: 0;
+    padding-top: 0;
+  }
+}
+
+/* --- LEFT SIDEBAR (cover page) – slot styling; grid placement is above --- */
+
+/* Section title (sidebar): uses section title tokens; sidebar weight and border color */
+.printTheme--geisli .cover-slot-title {
+  font-size: var(--geisli-section-title-font-size);
+  font-weight: var(--geisli-section-title-font-weight-sidebar);
+  letter-spacing: var(--geisli-section-title-letter-spacing);
+  margin: 0 0 var(--geisli-section-title-margin-bottom) 0;
+  padding-bottom: var(--geisli-section-title-padding-bottom);
+  color: inherit;
+  text-transform: none;
+  position:relative;
+  width:100%;
+  border-bottom:0;
+  padding-bottom:var(--geisli-space-s);
+  margin-bottom:var(--geisli-space-s);
+}
+
+.printTheme--geisli .cover-slot-title::after {
+  content:"";
+  position:absolute;
+  left:0;
+  right:calc(-1 * var(--geisli-cover-pad-x)); /* bleed into the column padding */
+  bottom:0;
+  height:var(--geisli-section-title-border-width);
+  background:var(--cv-border);
+}
+
+.printTheme--geisli .cover-slot-photo {
+  order: 1;
+  display: flex;
+  justify-content: center;
+  margin-bottom: 0;
+}
+
+.printTheme--geisli .cover-photo-wrapper {
+  position: relative;
+  display: inline-block;
+  isolation: isolate; /* prevents mixing with the page background */
+  width: 75%;
+}
+
+.printTheme--geisli .cover-photo-img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  outline: 1.023rem solid rgba(255, 255, 255, 0.3); /* 15px */
+  outline-offset: 0;
+  position: relative;
+  display: block;
+}
+
+.printTheme--geisli .cover-photo-wrapper::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: #42198c;     /* blue-purple between your two target colors */
+  mix-blend-mode: color;   /* keeps luminance, only changes hue/sat */
+  pointer-events: none;
+  border-radius: 50%;
+}
+
+.printTheme--geisli .cover-slot-contacts { order: 2; }
+.printTheme--geisli .cover-slot-roles { order: 3; }
+.printTheme--geisli .cover-slot-expertKnowledge { order: 4; }
+.printTheme--geisli .cover-slot-languages { order: 5; }
+/* Utvalda projekt live in main column; hide from sidebar */
+.printTheme--geisli .cover-slot-featuredProjects { display: none; order: 6; }
+
+/* Sidebar section separators (reference) */
+.printTheme--geisli .cover-slot-roles,
+.printTheme--geisli .cover-slot-expertKnowledge,
+.printTheme--geisli .cover-slot-languages {
+  padding-top: var(--geisli-padding-sidebar-v);
+}
+
+.printTheme--geisli .cover-contacts-list,
+.printTheme--geisli .cover-list {
+  list-style: disc inside;
+  padding: 0;
+  margin: 0;
+  font-size: var(--geisli-font-size-body);
+  line-height: var(--geisli-line-height-meta);
+}
+
+.printTheme--geisli .cover-contacts-list li,
+.printTheme--geisli .cover-list li {
+  margin-bottom: var(--geisli-list-item-spacing);
+}
+
+/* --- RIGHT MAIN COLUMN --- */
+.printTheme--geisli .print-cv {
+  background: var(--cv-page-bg);
+  color: var(--cv-text);
+  padding: var(--geisli-padding-print-cv) var(--geisli-padding-print-cv) var(--geisli-space-3xl);
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* Main header: name + title only (contact is in sidebar) */
+.printTheme--geisli .cv-header {
+  margin-bottom: var(--geisli-space-m);
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.printTheme--geisli .cv-photo,
+.printTheme--geisli .cv-contacts {
+  display: none;
+}
+
+.printTheme--geisli .cv-name {
+  font-size: var(--geisli-heading-cover-name);
+  font-weight: 200;
+  letter-spacing: 0;
+  margin-bottom: 0;
+}
+
+.printTheme--geisli .cv-title {
+  font-size: var(--geisli-font-size-base);
+  color: var(--cv-muted);
+  margin: 0;
+  font-weight: 400;
+  font-style: normal;
+}
+
+.printTheme--geisli .cv-contactItem {
+  white-space: nowrap;
+}
+
+/* Footer */
+.printTheme--geisli .cv-footer {
+  margin-top: var(--geisli-space-2xl);
+  padding-top: var(--geisli-space-m);
+  border-top: 0.068rem solid var(--cv-border);
+  text-align: center;
+  font-size: var(--geisli-font-size-footer);
+  color: var(--cv-muted-2);
+}
+
+/* Main sections (reference: Sammanfattning, Utvalda projekt – h2 with border-bottom) */
+.printTheme--geisli .cv-section {
+  margin-top: var(--geisli-space-xl);
+  margin: var(--geisli-space-xl) 0 var(--geisli-space-l) 0;
+}
+
+/* Section title (right column / cover main): uses section title tokens; main weight and border */
+.printTheme--geisli .section-title {
+  font-size: var(--geisli-section-title-font-size);
+  font-weight: var(--geisli-section-title-font-weight);
+  letter-spacing: var(--geisli-section-title-letter-spacing);
+  margin: 0 0 var(--geisli-section-title-margin-bottom) 0;
+  padding-bottom: var(--geisli-section-title-padding-bottom);
+  border-bottom: var(--geisli-section-title-border-width) solid var(--cv-border-strong);
+  color: var(--cv-text);
+  text-transform: none;
+}
+
+.printTheme--geisli .summary-text {
+  margin: 0;
+  font-size: var(--geisli-font-size-body);
+  line-height: var(--geisli-body-line-height);
+  text-align: left;
+  hyphens: auto;
+}
+
+/* Paragraph and list rhythm: shared by .summary-text, .role-description, .education-description, .training-description */
+.printTheme--geisli .summary-text p,
+.printTheme--geisli .role-description p,
+.printTheme--geisli .education-description p,
+.printTheme--geisli .training-description p {
+  margin-block: 0 var(--geisli-paragraph-margin-block-end);
+}
+.printTheme--geisli .summary-text p:last-child,
+.printTheme--geisli .role-description p:last-child,
+.printTheme--geisli .education-description p:last-child,
+.printTheme--geisli .training-description p:last-child {
+  margin-block-end: 0;
+}
+/* Body content lists only (summary, role, education, training – not .cover-list / .cover-contacts-list) */
+.printTheme--geisli .summary-text ul,
+.printTheme--geisli .summary-text ol,
+.printTheme--geisli .role-description ul,
+.printTheme--geisli .role-description ol,
+.printTheme--geisli .education-description ul,
+.printTheme--geisli .education-description ol,
+.printTheme--geisli .training-description ul,
+.printTheme--geisli .training-description ol {
+  margin: 0;
+  margin-block: var(--geisli-list-margin-block);
+  padding-left: var(--geisli-list-indent);
+  line-height: var(--geisli-list-line-height);
+  list-style-position: outside;
+}
+.printTheme--geisli .summary-text ul:first-child,
+.printTheme--geisli .summary-text ol:first-child,
+.printTheme--geisli .role-description ul:first-child,
+.printTheme--geisli .role-description ol:first-child,
+.printTheme--geisli .education-description ul:first-child,
+.printTheme--geisli .education-description ol:first-child,
+.printTheme--geisli .training-description ul:first-child,
+.printTheme--geisli .training-description ol:first-child {
+  margin-block-start: 0;
+}
+.printTheme--geisli .summary-text li,
+.printTheme--geisli .role-description li,
+.printTheme--geisli .education-description li,
+.printTheme--geisli .training-description li {
+  margin-block: 0 var(--geisli-list-item-gap);
+  padding-left: var(--geisli-list-marker-gap);
+}
+.printTheme--geisli .summary-text li:last-child,
+.printTheme--geisli .role-description li:last-child,
+.printTheme--geisli .education-description li:last-child,
+.printTheme--geisli .training-description li:last-child {
+  margin-block-end: 0;
+}
+
+/* Body page text: left alignment, tighter paragraph gap (cover unchanged) */
+.printTheme--geisli .cv-page-content p {
+  text-align: left;
+  hyphens: auto;
+  margin-block-start: 0;
+  margin-block-end: var(--geisli-paragraph-gap);
+}
+.printTheme--geisli .cv-page-content p:last-child {
+  margin-block-end: 0;
+}
+
+/* --- BODY PAGES: section titles (full-width border) and two-column layout (32% / 68%) --- */
+
+/* Section title (body pages): same tokens as .section-title; full width of content area */
+.printTheme--geisli .cv-page-content .body-section-title {
+  font-size: var(--geisli-section-title-font-size);
+  font-weight: var(--geisli-section-title-font-weight);
+  letter-spacing: var(--geisli-section-title-letter-spacing);
+  margin: 0 0 var(--geisli-section-title-margin-bottom) 0;
+  padding-bottom: var(--geisli-section-title-padding-bottom);
+  border-bottom: var(--geisli-section-title-border-width) solid var(--cv-border-strong);
+  color: var(--cv-text);
+  text-transform: none;
+  width: 100%;
+}
+
+/* Two-column grid: same proportions as cover (32% 68%) */
+.printTheme--geisli .print-role,
+.printTheme--geisli .print-education,
+.printTheme--geisli .print-training {
+  display: grid;
+  grid-template-columns: 32% 68%;
+  gap: var(--geisli-space-m) var(--geisli-space-l);
+  align-items: start;
+  margin-bottom: var(--geisli-role-block-gap-bottom);
+}
+
+/* Paragraph mode: spacing between paragraphs and before next role header */
+.printTheme--geisli .print-role--paragraph-only {
+  margin-bottom: var(--geisli-paragraph-gap);
+}
+.printTheme--geisli .print-role--paragraph-only + .print-role--header-only {
+  margin-top: var(--geisli-paragraph-gap);
+}
+/* List item mode: tight list rendering */
+.printTheme--geisli .print-role--list-item-only {
+  margin-bottom: 0;
+}
+
+/* Header + first paragraph block: gap above role, paragraph gap below */
+.printTheme--geisli .print-role--header-and-first-p {
+  margin-bottom: var(--geisli-paragraph-gap);
+  margin-top: var(--geisli-role-block-gap-top);
+}
+.printTheme--geisli .print-role--header-and-first-p + .print-role--header-only {
+  margin-top: var(--geisli-paragraph-gap);
+}
+
+.printTheme--geisli .skill-group {
+  display: grid;
+  grid-template-columns: 32% 68%;
+  gap: var(--geisli-space-xs) var(--geisli-space-l);
+  align-items: baseline;
+  margin-bottom: var(--geisli-space-s);
+}
+
+/* Left column: dates and institution in cv-muted; date font-weight 400, institution 500 */
+.printTheme--geisli .role-meta,
+.printTheme--geisli .education-meta,
+.printTheme--geisli .training-meta,
+.printTheme--geisli .skill-meta {
+  color: var(--cv-muted);
+  font-size: var(--geisli-font-size-meta);
+  display: flex;
+  flex-direction: column;
+  gap: var(--geisli-space-gap-tight);
+}
+
+.printTheme--geisli .role-date,
+.printTheme--geisli .education-date,
+.printTheme--geisli .training-year {
+  font-weight: 400;
+  white-space: nowrap;
+}
+
+.printTheme--geisli .role-company,
+.printTheme--geisli .education-school,
+.printTheme--geisli .training-issuer {
+  font-weight: 500;
+  font-size: var(--geisli-font-size-body);
+  color: var(--cv-muted);
+}
+
+.printTheme--geisli .skill-level-label {
+  font-weight: 500;
+  color: var(--cv-muted);
+  font-size: var(--geisli-font-size-meta);
+}
+
+.printTheme--geisli .competence-skill-list {
+  color: #929292;
+  font-size: var(--geisli-font-size-body);
+}
+
+/* Right column: content; role title and featured project item title use same sub heading size */
+.printTheme--geisli .role-content .role-title {
+  font-size: var(--geisli-font-size-sub);
+  font-weight: 400;
+  margin: 0 0 var(--geisli-list-item-spacing) 0;
+}
+
+.printTheme--geisli .featured-project-role,
+.printTheme--geisli .featured-project-customer {
+  font-size: var(--geisli-font-size-sub);
+  font-weight: 400;
+  margin: 0 0 var(--geisli-space-xs) 0;
+}
+.printTheme--geisli .featured-project-customer {
+  color: var(--cv-muted);
+}
+
+.printTheme--geisli .role-description {
+  margin: 0;
+  font-size: var(--geisli-font-size-body);
+  line-height: var(--geisli-body-line-height);
+  color: var(--cv-text);
+  text-align: left;
+  hyphens: auto;
+}
+
+/* Competence per role: comma-separated names, alphabetical, muted */
+.printTheme--geisli .role-skills {
+  margin: 0;
+  font-size: var(--geisli-font-size-body);
+  color: #929292;
+  line-height: var(--geisli-line-height-compact);
+  font-style: normal;
+}
+
+.printTheme--geisli .education-program {
+  font-size: var(--geisli-font-size-program);
+  font-weight: 700;
+  margin: 0 0 var(--geisli-space-xs) 0;
+}
+
+.printTheme--geisli .education-description {
+  font-size: var(--geisli-font-size-meta);
+  color: var(--cv-text);
+  margin: 0;
+  line-height: var(--geisli-body-line-height);
+  text-align: left;
+  hyphens: auto;
+}
+
+.printTheme--geisli .training-content .training-title {
+  font-weight: 500;
+  display: block;
+}
+
+.printTheme--geisli .training-type {
+  font-size: var(--geisli-font-size-small);
+  color: var(--cv-muted-2);
+  font-style: italic;
+}
+
+.printTheme--geisli .training-description {
+  margin: 0;
+  font-size: var(--geisli-font-size-meta);
+  line-height: var(--geisli-body-line-height);
+  color: var(--cv-text);
+  text-align: left;
+  hyphens: auto;
+}
+
+.printTheme--geisli .skill-list {
+  font-size: var(--geisli-font-size-meta);
+  color: var(--cv-text);
+}
+
+.printTheme--geisli .print-commitment {
+  font-size: var(--geisli-font-size-meta);
+  margin-bottom: var(--geisli-space-s);
+}
+
+.printTheme--geisli .commitment-title {
+  font-weight: 500;
+}
+
+/* --- Page layout (body pages): tokens control insets and footer reservation --- */
+
+.printTheme--geisli .cv-page {
+  position: relative;
+  height: 76.54rem; /* 297mm A4 */
+  box-sizing: border-box;
+  padding: 0; /* insets only on .cv-page-content via tokens */
+  overflow: hidden; /* clip wave bleed so footer container stays page width */
+}
+
+/* Content wrapper: only element with page insets; padding-bottom reserves footer space so text never overlaps wave */
+.printTheme--geisli .cv-page-content {
+  box-sizing: border-box;
+  padding: var(--geisli-page-pad-top) var(--geisli-page-pad-x) calc(var(--geisli-footer-height) + var(--geisli-footer-overhang)) var(--geisli-page-pad-x);
+}
+
+/* Cover page: no footer reservation */
+.printTheme--geisli .cv-page--cover .cv-page-content {
+  padding-bottom: var(--geisli-page-pad-top);
+}
+
+/* Body page footer: out of flow, height from tokens only */
+.printTheme--geisli .cv-page-footer {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: calc(var(--geisli-footer-height) + var(--geisli-footer-overhang));
+  min-height: calc(var(--geisli-footer-height) + var(--geisli-footer-overhang));
+  width: auto;
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  color: var(--cv-text, #111827);
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+/* Wave background bleeds to page edges via pseudo-element only; --geisli-page-bleed used only here */
+.printTheme--geisli .cv-page-footer::before {
+  content: "";
+  position: absolute;
+  left: calc(-1 * var(--geisli-page-bleed));
+  right: calc(-1 * var(--geisli-page-bleed));
+  top: 0;
+  bottom: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 500 150' preserveAspectRatio='none'%3E%3Cpath d='M0.00,49.98 C86.06,-38.97 247.45,180.08 501.40,27.13 L500.00,150.00 L0.00,150.00 Z' fill='%23E0E3E7'/%3E%3C/svg%3E");
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  background-position: bottom;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+  pointer-events: none;
+}
+
+/* Optional child .cv-page-footer__wave: use only if wave is moved to a real element; do not double-apply with ::before */
+/* .printTheme--geisli .cv-page-footer__wave { ... bleed ... } */
+
+/* Footer inner: positions page number and logo */
+.printTheme--geisli .cv-page-footer__inner {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  top: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  pointer-events: none;
+}
+
+/* Page number: centered, from bottom, purple, sub size */
+.printTheme--geisli .cv-page-footer__page-number {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: var(--geisli-space-l);
+  font-size: var(--geisli-font-size-sub);
+  font-weight: 500;
+  color: #9b6bfa;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+/* Logo: right side, aligned with body content inset */
+.printTheme--geisli .cv-page-footer__logo {
+  position: absolute;
+  right: var(--geisli-page-pad-x);
+  bottom: 0.205rem; /* 3px, aligns with image baseline */
+  height: 5.114rem; /* 75px */
+  width: auto;
+  object-fit: contain;
+  object-position: bottom right;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+/* Single footer system: .cv-page-footer is used on body pages; disable legacy .cv-footer */
+.printTheme--geisli .cv-footer {
+  display: none !important;
+}
+
+.printTheme--geisli .cv-footer__wave {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 6.70rem; /* 26mm */
+  background: var(--cv-footer-bg);
+  clip-path: path(
+    "M0 42 C 14 50 28 57 40 61 C 55 66 68 75 80 80 C 90 80 97 73 100 66 L 100 100 L 0 100 Z"
+  );
+}
+
+.printTheme--geisli .cv-footer__inner {
+  position: absolute;
+  left: 4.64rem;   /* 18mm */
+  right: 4.64rem;
+  bottom: 1.804rem; /* 7mm */
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: flex-end;
+  font-size: var(--geisli-font-size-footer-inner);
+}
+
+.printTheme--geisli .cv-footer__page-number {
+  justify-self: center;
+  color: var(--cv-accent);
+}
+
+strong {
+  font-weight: 700;
+}
+
+.printTheme--geisli .cv-footer__logo {
+  justify-self: end;
+  height: 3.61rem; /* 14mm */
+  object-fit: contain;
+}
+
+@media print {
+  /* @page margins are zero. Footer space = calc(--geisli-footer-height + --geisli-footer-overhang) on both .cv-page-content and .cv-page-footer. */
+  @page {
+    margin: 0;
+  }
+
+  /* Prevent cover from splitting; force a new page after the cover */
+  .cv-print-root .cv-cover-row {
+    page-break-inside: avoid;
+    break-inside: avoid;
+    page-break-after: always;
+    break-after: page;
+  }
+}

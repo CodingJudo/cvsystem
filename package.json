@@ -1,0 +1,19 @@
+{
+  "name": "cvsystem-workspace",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "pnpm --filter demo dev",
+    "build": "pnpm --filter demo build",
+    "start": "pnpm --filter demo start",
+    "lint": "eslint && pnpm --filter demo lint",
+    "test": "pnpm -r test",
+    "test:run": "pnpm -r test:run",
+    "test:all": "pnpm -r --filter './packages/**' test:run"
+  },
+  "devDependencies": {
+    "@changesets/cli": "^2.31.0",
+    "eslint": "^9",
+    "typescript": "^5"
+  }
+}

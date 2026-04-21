@@ -1,0 +1,26 @@
+.printTheme--light {
+  --cv-page-bg: #ffffff;
+  --cv-text: #1a1a1a;
+  --cv-muted: #555555;
+  --cv-muted-2: #666666;
+  --cv-border: #cccccc;
+  --cv-border-strong: #333333;
+}
+
+.printTheme--light .print-cv {
+  background: var(--cv-page-bg);
+  color: var(--cv-text);
+}
+
+/* Cover page: theme can reorder slots via order, and override spacing/typography */
+.printTheme--light .cover-page {
+  background: var(--cv-page-bg);
+  color: var(--cv-text);
+}
+
+.printTheme--light .cover-slot-photo { order: 1; }
+.printTheme--light .cover-slot-contacts { order: 2; }
+.printTheme--light .cover-slot-roles { order: 3; }
+.printTheme--light .cover-slot-expertKnowledge { order: 4; }
+.printTheme--light .cover-slot-languages { order: 5; }
+.printTheme--light .cover-slot-featuredProjects { order: 6; }

@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "lib": ["esnext", "dom"],
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "noEmit": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "paths": {
+      "@cvsystem/core": ["../../packages/core/src/index.ts"],
+      "@cvsystem/core/*": ["../../packages/core/src/*"]
+    }
+  },
+  "include": ["src/**/*.ts"]
+}

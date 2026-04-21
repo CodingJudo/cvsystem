@@ -1,0 +1,470 @@
+/**
+ * Shared print content styles for the paginated layout.
+ * Matches legacy print-layout typography and spacing; page breaks are JS-driven.
+ * Preview uses same CSS as print; only @media print adds page-break rules.
+ */
+
+/* Paginated layout: container is block so single child (.cv-print-root) is full width, not 30% */
+.print-output--paginated {
+  display: block;
+}
+.print-output--paginated .cv-print-root {
+  width: 210mm;
+  max-width: 100%;
+  margin: 0 auto;
+}
+
+/* Preview (screen): force A4 width so preview is not squeezed – same as print */
+@media screen {
+  .print-output--paginated {
+    width: 210mm !important;
+    min-width: 210mm;
+    max-width: none;
+  }
+  .print-output--paginated .cv-print-root {
+    width: 210mm !important;
+    min-width: 210mm;
+    max-width: none;
+  }
+
+  /* Preview-only: gap between pages and drop shadow for stacked-page illusion.
+     Shadow only on bottom and right so the gap stays clean (no left/right lines). */
+  .print-output--paginated .cv-print-root {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+  }
+  .print-output--paginated .cv-print-root .cv-cover-row,
+  .print-output--paginated .cv-print-root .cv-page {
+    box-shadow:
+      6px 0 12px -2px rgba(0, 0, 0, 0.1),
+      0 6px 12px -2px rgba(0, 0, 0, 0.1);
+  }
+}
+
+/* Cover row: two columns (sidebar 30%, main 70%) – screen and print */
+.cv-print-root .cv-cover-row {
+  display: grid;
+  grid-template-columns: 32% 68%;
+  min-height: 297mm;
+  box-sizing: border-box;
+}
+
+/* Sidebar: dark background; hide featured projects here (they appear in main column only) */
+.cv-print-root .cv-cover-row .cover-page {
+  background: var(--sidebar-bg, #0f172a);
+  color: var(--sidebar-text, #f9fafb);
+}
+.cv-print-root .cv-cover-row .cover-page .cover-slot-featuredProjects {
+  display: none;
+}
+
+/* Main column: hide photo and contacts (they appear in sidebar only) */
+.cv-print-root .cv-cover-row .cv-cover-main-wrapper .cv-photo,
+.cv-print-root .cv-cover-row .cv-cover-main-wrapper .cv-contacts {
+  display: none;
+}
+
+@media print {
+  .cv-print-root .cv-cover-row {
+    display: block;
+    page-break-after: always;
+  }
+  .cv-print-root .cv-cover-row .cover-page {
+    width: 30%;
+    float: left;
+    height: 297mm;
+    min-height: 297mm;
+    break-after: unset; /* cover row is one page; JS pagination (Phase 4) */
+  }
+  .cv-print-root .cv-cover-row .cv-cover-main-wrapper {
+    width: 70%;
+    float: left;
+    height: 297mm;
+    min-height: 297mm;
+  }
+
+  /* Force each logical .cv-page to exactly one printed page (JS pagination already split content). */
+  .cv-print-root .cv-page {
+    height: 297mm;
+    min-height: 297mm;
+    max-height: 297mm;
+    page-break-after: always;
+    page-break-inside: avoid;
+  }
+  .cv-print-root .cv-page:last-of-type {
+    page-break-after: auto;
+  }
+}
+
+/* Base page: padding and typography (legacy .print-cv equivalent); flex so footer sticks to bottom */
+.cv-print-root .cv-page {
+  box-sizing: border-box;
+  font-family: 'Georgia', 'Times New Roman', serif;
+  background: var(--cv-page-bg, #ffffff);
+  color: var(--cv-text, #1a1a1a);
+  font-size: 11pt;
+  line-height: 1.5;
+  padding: 20mm;
+  display: flex;
+  flex-direction: column;
+  min-height: 297mm;
+}
+
+.cv-print-root .cv-page-content {
+  box-sizing: border-box;
+  flex: 1;
+  min-height: 0;
+}
+
+/* Page header/footer (body pages); height from theme def or CSS var; footer at bottom via margin-top: auto */
+.cv-print-root .cv-page-header {
+  min-height: var(--cv-page-header-height, 50px);
+  height: var(--cv-page-header-height, 50px);
+  flex-shrink: 0;
+  background: var(--cv-page-header-bg, #e5e5e5);
+  color: var(--cv-page-header-text-color, #666);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 0 1rem 0;
+  padding: 0 1rem;
+  box-sizing: border-box;
+}
+.cv-print-root .cv-page-header-text {
+  font-size: 0.9rem;
+}
+.cv-print-root .cv-page-footer {
+  min-height: var(--cv-page-footer-height, 40px);
+  flex-shrink: 0;
+  margin-top: auto;
+  background: var(--cv-page-footer-bg, #e5e5e5);
+  color: var(--cv-page-footer-text-color, #666);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 1rem;
+  box-sizing: border-box;
+}
+.cv-print-root .cv-page-footer-text {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+/* Cover / intro */
+.cv-print-root .cv-cover-main {
+  /* no break rules; pagination engine controls pages */
+}
+
+.cv-print-root .cv-header {
+  text-align: center;
+  margin-bottom: 24pt;
+  border-bottom: 2pt solid var(--cv-border-strong, #333);
+  padding-bottom: 16pt;
+  position: relative;
+}
+
+.cv-print-root .cv-photo {
+  width: 64pt;
+  height: 64pt;
+  object-fit: cover;
+  border-radius: 10pt;
+  outline: 15px solid var(--cv-border, #ccc);
+  outline-offset: 0;
+  margin: 0 auto 10pt auto;
+  display: block;
+}
+
+.cv-print-root .cv-name {
+  font-size: 24pt;
+  font-weight: bold;
+  margin: 0 0 8pt 0;
+  letter-spacing: 0.5pt;
+}
+
+.cv-print-root .cv-title {
+  font-size: 14pt;
+  color: var(--cv-muted, #444);
+  margin: 0;
+  font-style: italic;
+}
+
+.cv-print-root .cv-contacts {
+  margin-top: 8pt;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6pt 12pt;
+  font-size: 9.5pt;
+  color: var(--cv-muted-2, #666);
+}
+
+.cv-print-root .cv-contactItem {
+  white-space: nowrap;
+}
+
+.cv-print-root .cv-section {
+  margin-bottom: 20pt;
+}
+
+.cv-print-root .section-title {
+  font-size: 14pt;
+  font-weight: bold;
+  color: var(--cv-text, #333);
+  margin: 0 0 10pt 0;
+  border-bottom: 1pt solid var(--cv-border, #ccc);
+  padding-bottom: 4pt;
+  text-transform: uppercase;
+  letter-spacing: 1pt;
+}
+
+.cv-print-root .summary-text {
+  margin: 0;
+  text-align: justify;
+}
+
+/* Basic markdown lists (same class on ul) */
+.cv-print-root .summary-text ul,
+.cv-print-root .role-description ul,
+.cv-print-root .education-description ul,
+.cv-print-root .training-description ul,
+.cv-print-root .commitment-description ul,
+.cv-print-root .featured-project-desc ul {
+  list-style: disc;
+  padding-left: 1.5em;
+  margin: 0.5em 0;
+}
+.cv-print-root .summary-text li,
+.cv-print-root .role-description li,
+.cv-print-root .education-description li,
+.cv-print-root .training-description li,
+.cv-print-root .commitment-description li,
+.cv-print-root .featured-project-desc li {
+  margin: 0.25em 0;
+}
+
+.cv-print-root .featured-projects-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12pt;
+}
+
+.cv-print-root .featured-project-item {
+  /* no break-inside; JS pagination */
+}
+
+.cv-print-root .featured-project-title {
+  font-size: 11pt;
+  font-weight: 600;
+  margin: 0 0 4pt 0;
+  color: var(--cv-text, #333);
+}
+
+.cv-print-root .featured-project-desc {
+  margin: 0;
+  font-size: 10pt;
+  line-height: 1.5;
+  color: var(--cv-text, #333);
+  text-align: justify;
+}
+
+/* Roles / experience */
+.cv-print-root .roles-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16pt;
+}
+
+.cv-print-root .print-role {
+  /* no break-inside; JS pagination */
+}
+
+.cv-print-root .role-meta {
+  margin-bottom: 4pt;
+}
+
+.cv-print-root .role-content {
+  /* right column content when theme uses two-column; base theme flows below meta */
+}
+
+.cv-print-root .role-title {
+  font-size: 12pt;
+  font-weight: bold;
+  margin: 0;
+}
+
+.cv-print-root .role-company {
+  font-size: 11pt;
+  color: var(--cv-muted, #444);
+}
+
+.cv-print-root .role-location {
+  font-size: 10pt;
+  color: var(--cv-muted-2, #666);
+  font-style: italic;
+}
+
+.cv-print-root .role-skills {
+  font-size: 9pt;
+  color: #929292;
+  margin: 4pt 0;
+  font-style: italic;
+}
+
+.cv-print-root .role-date {
+  font-size: 10pt;
+  color: var(--cv-muted-2, #666);
+  white-space: nowrap;
+}
+
+.cv-print-root .role-description {
+  margin: 6pt 0 0 0;
+  text-align: justify;
+  font-size: 10pt;
+  color: var(--cv-text, #333);
+}
+
+/* Education */
+.cv-print-root .education-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12pt;
+}
+
+.cv-print-root .print-education {
+  /* no break-inside; JS pagination */
+}
+
+.cv-print-root .education-meta {
+  margin-bottom: 4pt;
+}
+
+.cv-print-root .education-content {
+  /* right column when theme uses two-column */
+}
+
+.cv-print-root .education-program {
+  font-size: 11pt;
+  font-weight: bold;
+  margin: 0;
+}
+
+.cv-print-root .education-school {
+  font-size: 10pt;
+  color: var(--cv-muted, #444);
+}
+
+.cv-print-root .education-date {
+  font-size: 10pt;
+  color: var(--cv-muted-2, #666);
+  white-space: nowrap;
+}
+
+.cv-print-root .education-description {
+  margin: 4pt 0 0 0;
+  font-size: 10pt;
+  color: var(--cv-muted, #555);
+}
+
+/* Training */
+.cv-print-root .training-container {
+  display: flex;
+  flex-direction: column;
+  gap: 6pt;
+}
+
+.cv-print-root .print-training {
+  font-size: 10pt;
+}
+
+.cv-print-root .training-meta {
+  margin-bottom: 4pt;
+}
+
+.cv-print-root .training-content {
+  /* right column when theme uses two-column */
+}
+
+.cv-print-root .training-title {
+  font-weight: 500;
+}
+
+.cv-print-root .training-issuer {
+  color: var(--cv-muted, #555);
+}
+
+.cv-print-root .training-year {
+  color: var(--cv-muted-2, #666);
+}
+
+.cv-print-root .training-type {
+  font-size: 9pt;
+  color: var(--cv-muted-2, #888);
+  font-style: italic;
+}
+
+/* Commitments */
+.cv-print-root .commitment-container {
+  display: flex;
+  flex-direction: column;
+  gap: 6pt;
+}
+
+.cv-print-root .print-commitment {
+  font-size: 10pt;
+}
+
+.cv-print-root .commitment-title {
+  font-weight: 500;
+}
+
+.cv-print-root .commitment-venue {
+  color: var(--cv-muted, #555);
+}
+
+.cv-print-root .commitment-date {
+  color: var(--cv-muted-2, #666);
+}
+
+/* Skills / competence */
+.cv-print-root .skills-container {
+  display: flex;
+  flex-direction: column;
+  gap: 6pt;
+}
+
+.cv-print-root .skill-meta {
+  /* left column when theme uses two-column */
+}
+
+.cv-print-root .skill-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4pt;
+}
+
+.cv-print-root .skill-level-label {
+  font-weight: bold;
+  min-width: 100pt;
+  color: var(--cv-muted, #555);
+}
+
+.cv-print-root .skill-list {
+  flex: 1;
+}
+
+/* Competence section: names only, comma-separated, muted (no level numbers) */
+.cv-print-root .competence-skill-list {
+  color: #929292;
+  font-size: 9pt;
+}
+
+.cv-print-root .print-skill {
+  display: inline;
+}
+
+.cv-print-root .skill-level,
+.cv-print-root .skill-years {
+  color: var(--cv-muted-2, #666);
+  font-size: 9pt;
+}

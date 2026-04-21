@@ -1,0 +1,15 @@
+export {
+  normalizeSkillName,
+  findSkillByName,
+  ensureUniqueSkills,
+  ensureUniqueSkillsCaseInsensitive,
+  addSkill,
+  updateSkill,
+  removeSkill,
+  addSkillToRole,
+  removeSkillFromRole,
+  updateSkillLevelOnRole,
+  recalculateYears,
+  linkRoleSkillsToMainSkills,
+  normalizeAfterImport,
+} from './competence-service';
