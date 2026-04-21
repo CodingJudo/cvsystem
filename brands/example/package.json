@@ -1,11 +1,13 @@
 {
   "name": "@cvsystem/example-brand",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": false,
   "type": "module",
   "main": "./src/index.ts",
   "types": "./src/index.ts",
-  "publishConfig": { "access": "public" },
+  "publishConfig": {
+    "access": "public"
+  },
   "dependencies": {
     "@cvsystem/core": "workspace:*"
   }
