@@ -19,6 +19,7 @@
     "@cvsystem/adapters-browser": "workspace:*",
     "@cvsystem/adapters-firebase": "workspace:*",
     "@cvsystem/example-brand": "workspace:*",
+    "@cvsystem/ui": "workspace:*",
     "@hookform/resolvers": "^5.2.2",
     "@radix-ui/react-accordion": "^1.2.12",
     "@radix-ui/react-label": "^2.1.8",

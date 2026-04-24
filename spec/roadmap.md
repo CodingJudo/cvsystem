@@ -116,16 +116,19 @@ All items finished as of 2026-04-21. Landed in commits `26b9f86` and `f5e592d`.
 
 ---
 
-### 1f. Publishing setup
+### 1f. Publishing setup ✅ COMPLETE
 
-- [ ] Adopt `changesets` (`@changesets/cli`)
-- [ ] Public packages (MIT, Coding Judo / John Shaw): `@cvsystem/core`, `@cvsystem/adapters-browser`, `@cvsystem/adapters-firebase`, `@cvsystem/ui` (if extracted). Private: `brands/geisli` (proprietary, Geisli Consulting AB), `apps/demo`
-- [ ] Initial version `0.1.0` across the suite
-- [ ] GitHub Actions: lint + test + typecheck + build on PR; release on merge to `main` via changesets
-- [ ] Verify `@cvsystem` npm org is available
-- [ ] Audit git history for PII / secrets before making repo public (`git log --all -- fixtures/`, `.env*`)
-- [ ] Strip `brands/geisli/` from the public repo history OR move it to a private sibling repo; add `brands/example/` as a minimal reference brand in the OSS repo
-- [ ] `brands/geisli/LICENSE` confirms proprietary status (already done)
+All items finished as of 2026-04-21.
+
+- [x] Adopt `changesets` (`@changesets/cli`)
+- [x] Public packages (MIT, Coding Judo / John Shaw): `@cvsystem/core`, `@cvsystem/adapters-browser`, `@cvsystem/adapters-firebase`, `@cvsystem/example-brand`. Private: `brands/geisli` (proprietary, Geisli Consulting AB), `apps/demo`
+- [x] Initial version `0.2.0` published to npm (minor bump from 0.1.0 baseline)
+- [x] GitHub Actions: CI on PR (`ci.yml`); release on merge to `main` via changesets (`release.yml`)
+- [x] `@cvsystem` npm org created (owner: codingjudo)
+- [x] Git history squashed to single orphan commit — eliminates all PII/fixture history
+- [x] `brands/geisli/` stripped from history + gitignored; `brands/example/` added as reference brand
+- [x] `brands/geisli/LICENSE` confirms proprietary status
+- [x] Repo made public at github.com/CodingJudo/cvsystem
 
 ---
 

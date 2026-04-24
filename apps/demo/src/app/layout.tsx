@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Poppins, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { brandConfig } from "@/lib/brand-config";
+import { BrandConfigProvider } from "@cvsystem/ui";
 
 const poppins = Poppins({
   variable: "--font-poppins",
@@ -29,7 +30,9 @@ export default function RootLayout({
       <body
         className={`${poppins.variable} ${geistMono.variable} antialiased font-sans`}
       >
-        {children}
+        <BrandConfigProvider config={brandConfig}>
+          {children}
+        </BrandConfigProvider>
       </body>
     </html>
   );

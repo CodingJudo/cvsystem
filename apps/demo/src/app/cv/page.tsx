@@ -1,5 +1,5 @@
-import { createMinimalCv } from '@/domain/model/cv';
-import { CVView } from './cv-view';
+import { createMinimalCv } from '@cvsystem/core';
+import { CVViewWrapper } from './cv-view-wrapper';
 
 export const metadata = {
   title: 'CV Overview',
@@ -16,7 +16,7 @@ export default async function CVPage() {
 
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
-      <CVView cv={cv} warnings={warnings} />
+      <CVViewWrapper cv={cv} warnings={warnings} />
     </div>
   );
 }

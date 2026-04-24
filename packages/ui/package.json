@@ -1,0 +1,42 @@
+{
+  "name": "@cvsystem/ui",
+  "version": "0.2.0",
+  "private": false,
+  "publishConfig": { "access": "public" },
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "test": "vitest",
+    "test:run": "vitest run"
+  },
+  "dependencies": {
+    "@cvsystem/core": "workspace:*",
+    "@cvsystem/adapters-browser": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@xyflow/react": "^12.0.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "react-hook-form": "^7.0.0",
+    "typescript": "^5.0.0"
+  },
+  "peerDependencies": {
+    "react": ">=19.0.0",
+    "react-dom": ">=19.0.0",
+    "@radix-ui/react-accordion": ">=1.0.0",
+    "@radix-ui/react-label": ">=2.0.0",
+    "@radix-ui/react-select": ">=2.0.0",
+    "@radix-ui/react-separator": ">=1.0.0",
+    "@radix-ui/react-slot": ">=1.0.0",
+    "@radix-ui/react-tabs": ">=1.0.0",
+    "class-variance-authority": ">=0.7.0",
+    "clsx": ">=2.0.0",
+    "tailwind-merge": ">=3.0.0",
+    "lucide-react": ">=0.400.0",
+    "@xyflow/react": ">=12.0.0",
+    "react-hook-form": ">=7.0.0"
+  }
+}
