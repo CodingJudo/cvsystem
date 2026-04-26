@@ -2,7 +2,7 @@
  * Test that each save file in saves/ can be imported successfully.
  * Run: pnpm test:run src/lib/file-formats/import-saves.test.ts
  */
-import { readFileSync, readdirSync } from 'node:fs';
+import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, it, expect } from 'vitest';
 import { importFromJson } from './import';
@@ -11,9 +11,9 @@ import { detectFormat, isValidCVFile } from './detect';
 const SAVES_DIR = join(process.cwd(), 'saves');
 
 describe('Import save files from saves/', () => {
-  const saveFiles = readdirSync(SAVES_DIR).filter(
-    (f) => f.endsWith('.json') && f.startsWith('john-shaw')
-  );
+  const saveFiles = existsSync(SAVES_DIR)
+    ? readdirSync(SAVES_DIR).filter((f) => f.endsWith('.json') && f.startsWith('john-shaw'))
+    : [];
 
   if (saveFiles.length === 0) {
     it.skip('no save files in saves/ (optional)', () => {});
